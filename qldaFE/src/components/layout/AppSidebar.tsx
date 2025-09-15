@@ -1,0 +1,82 @@
+import { NavLink, useLocation } from "react-router-dom"
+import {
+  Building,
+  FolderKanban,
+  FileText,
+  BarChart3,
+  HardHat,
+  DollarSign
+} from "lucide-react"
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+
+const navigationItems = [
+  { title: "Bảng Điều Khiển", url: "/dashboard", icon: BarChart3 },
+  { title: "Dự Án", url: "/projects", icon: Building },
+  { title: "Công Việc", url: "/tasks", icon: FolderKanban },
+  { title: "Giải Ngân", url: "/disbursement", icon: DollarSign },
+  { title: "Tài Liệu", url: "/documents", icon: FileText },
+  { title: "Tạo Bản Mẫu", url: "/templates", icon: HardHat }
+]
+
+
+export function AppSidebar() {
+  const { state } = useSidebar()
+  const location = useLocation()
+  const currentPath = location.pathname
+  const isCollapsed = state === "collapsed"
+
+  const isActive = (path: string) => currentPath === path
+
+  const getNavClassName = (path: string) =>
+    isActive(path)
+      ? "bg-primary text-primary-foreground font-medium shadow-construction"
+      : "hover:bg-muted transition-colors"
+
+  return (
+    <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
+      <SidebarContent className="bg-card border-r border-border">
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+              <HardHat className="w-5 h-5 text-white" />
+            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm text-foreground">Build Manager</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Điều Hướng Chính</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavClassName(item.url)}>
+                      <item.icon className="w-4 h-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  )
+}
