@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Plus,
   Search,
@@ -142,6 +141,7 @@ export default function Projects() {
   const { projects, isLoading, refetch } = useProjects()
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [dialogMode, setDialogMode] = useState<'view' | 'create' | 'edit' | 'copy' | null>(null)
+
   const exportDashboardXlsx = () => {
     const fileUrl = '/template_dashboard2.xlsx';
     saveAs(fileUrl, 'dashboard_export.xlsx');
@@ -162,14 +162,12 @@ export default function Projects() {
   const handleEditProject = (p: Project) => { setSelectedProject(p); setDialogMode('edit') }
   const handleCopyProject = (p: Project) => { setSelectedProject(p); setDialogMode('copy') }
 
-  //  Xoá qua service + refetch
   const handleDeleteProject = async (project: Project) => {
     if (!confirm(`Bạn có chắc chắn muốn xóa dự án "${project.name}"?`)) return
     await deleteProject(project.id)
     await refetch()
   }
 
-  // Lưu dự án theo mode (create/edit/copy) + refetch
   const handleSaveProject = async (projectData: Omit<Project, "id"> | Project) => {
     if (dialogMode === "create" || dialogMode === "copy") {
       await addProject(projectData as Omit<Project, "id">)
@@ -183,36 +181,73 @@ export default function Projects() {
 
   const handleCloseDialog = () => { setDialogMode(null); setSelectedProject(null) }
 
+  // ✅ Điều kiện render: Form (create/edit/copy) hoặc Danh sách
+  if (dialogMode === "create" || dialogMode === "edit" || dialogMode === "copy") {
+    return (
+      <div className="space-y-4 px-3 sm:px-0">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">
+            {dialogMode === "create" }
+            {dialogMode === "edit"}
+            {dialogMode === "copy" }
+          </h2>
+          
+        </div>
+        <ProjectForm
+          project={selectedProject || undefined}
+          mode={dialogMode}
+          onSave={handleSaveProject}
+          onCancel={handleCloseDialog}
+        />
+      </div>
+    )
+  }
+
+  if (dialogMode === "view" && selectedProject) {
+    return (
+      <div className="space-y-4 px-3 sm:px-0">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Chi Tiết Dự Án</h2>
+          <Button variant="outline" onClick={handleCloseDialog}>
+            Quay lại
+          </Button>
+        </div>
+        <ProjectDetail
+          project={selectedProject}
+          onEdit={handleEditProject}
+          onCopy={handleCopyProject}
+          onClose={handleCloseDialog}
+        />
+      </div>
+    )
+  }
+
+  // ✅ Mặc định: hiển thị danh sách dự án
   return (
     <div className="space-y-6 px-3 sm:px-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dự Án</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 truncate">Quản lý và theo dõi tất cả các dự án xây dựng của bạn</p>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 truncate">
+            Quản lý và theo dõi tất cả các dự án xây dựng của bạn
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Xuất Excel: icon-only trên mobile */}
-          <Button
+           <Button
             variant="outline"
-            size="icon"
-            className="sm:size-auto sm:px-4"
+            size="lg"
             onClick={() => exportDashboardXlsx()}
-            aria-label="Xuất Excel"
-            title="Xuất Excel"
           >
-            <FileDown className="w-4 h-4" />
-            <span className="hidden sm:inline ml-2">Xuất Excel</span>
+            <FileDown className="w-4 h-4 mr-2" />
+            Xuất Excel
           </Button>
 
           <Button variant="construction" className="sm:px-4" onClick={handleCreateProject}>
             <Plus className="w-4 h-4" />
-            {/* Hiện chữ trên desktop */}
             <span className="hidden sm:inline ml-2">Dự Án Mới</span>
-            {/* Hiện chữ trên mobile */}
             <span className="sm:hidden ml-2">Tạo dự án mới</span>
           </Button>
-
         </div>
       </div>
 
@@ -231,7 +266,6 @@ export default function Projects() {
                 />
               </div>
             </div>
-
             <div className="flex gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[9.5rem] sm:w-40">
@@ -246,7 +280,6 @@ export default function Projects() {
                   <SelectItem value="cancelled">Đã Hủy</SelectItem>
                 </SelectContent>
               </Select>
-
               <Button variant="outline" size="icon" aria-label="Bộ lọc nâng cao">
                 <Filter className="w-4 h-4" />
               </Button>
@@ -331,35 +364,6 @@ export default function Projects() {
           <p className="text-muted-foreground">Không tìm thấy dự án nào phù hợp với bộ lọc của bạn.</p>
         </div>
       )}
-
-      {/* Dialogs */}
-      {/* View dialog: full-screen trên mobile */}
-      <Dialog open={dialogMode === "view"} onOpenChange={() => dialogMode === "view" && handleCloseDialog()}>
-        <DialogContent className="sm:max-w-6xl w-[100vw] sm:w-auto h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto p-0 sm:p-0 sm:rounded-xl rounded-none">
-          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
-            <DialogTitle>Chi Tiết Dự Án</DialogTitle>
-          </DialogHeader>
-          {selectedProject && (
-            <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <ProjectDetail project={selectedProject} onEdit={handleEditProject} onCopy={handleCopyProject} onClose={handleCloseDialog} />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Create/Edit/Copy dialog: full-screen trên mobile */}
-      <Dialog open={dialogMode === "create" || dialogMode === "edit" || dialogMode === "copy"} onOpenChange={() => (dialogMode === "create" || dialogMode === "edit" || dialogMode === "copy") && handleCloseDialog()}>
-        <DialogContent className="sm:max-w-6xl w-[100vw] sm:w-auto h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto p-0 sm:p-0 sm:rounded-xl rounded-none">
-          <div className="px-4 sm:px-6 py-4 sm:py-6">
-            <ProjectForm
-              project={selectedProject || undefined}
-              mode={dialogMode as "create" | "edit" | "copy"}
-              onSave={handleSaveProject}
-              onCancel={handleCloseDialog}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

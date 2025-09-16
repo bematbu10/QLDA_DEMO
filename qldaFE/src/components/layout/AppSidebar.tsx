@@ -21,14 +21,15 @@ import {
 } from "@/components/ui/sidebar"
 
 const navigationItems = [
-  { title: "Bảng Điều Khiển", url: "/dashboard", icon: BarChart3 },
+  { title: "Bảng Điều Khiển ", url: "/dashboard", icon: BarChart3 },
   { title: "Dự Án", url: "/projects", icon: Building },
   { title: "Công Việc", url: "/tasks", icon: FolderKanban },
   { title: "Giải Ngân", url: "/disbursement", icon: DollarSign },
   { title: "Tài Liệu", url: "/documents", icon: FileText },
-  { title: "Tạo Bản Mẫu", url: "/templates", icon: HardHat }
-]
+  { title: "Tạo Bản Mẫu", url: "/templates", icon: HardHat },
 
+
+]
 
 export function AppSidebar() {
   const { state } = useSidebar()
@@ -40,12 +41,13 @@ export function AppSidebar() {
 
   const getNavClassName = (path: string) =>
     isActive(path)
-      ? "bg-primary text-primary-foreground font-medium shadow-construction"
-      : "hover:bg-muted transition-colors"
+      ? "bg-primary text-primary-foreground font-medium shadow-construction "
+      : "hover:bg-muted transition-colors "
 
   return (
     <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-card border-r border-border">
+        {/* Logo section */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
@@ -53,12 +55,14 @@ export function AppSidebar() {
             </div>
             {!isCollapsed && (
               <div className="flex flex-col">
-                <span className="font-semibold text-sm text-foreground">Build Manager</span>
+                <span className="font-semibold text-sm text-foreground">BuildManager</span>
+                <span className="text-xs text-muted-foreground">Pro v2.0</span>
               </div>
             )}
           </div>
         </div>
 
+        {/* Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Điều Hướng Chính</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -76,6 +80,8 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+
       </SidebarContent>
     </Sidebar>
   )

@@ -11,12 +11,6 @@ import {
   CardTitle
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog"
 import { FileDown, Plus, TrendingUp } from "lucide-react"
 import { Project } from "@/types/project"
 import { ProjectDetail } from "@/views/projects/ProjectDetail"
@@ -25,12 +19,11 @@ import { useProjects } from "@/hooks/project/useProjects"
 import { addProject, updateProject } from "@/services/ProjectService"
 import { useState, useMemo } from "react"
 import { saveAs } from "file-saver"
-import MyOnlyOffice from "@/components/ui/myOnlyOffice"
 
 export default function Dashboard() {
   const { projects, isLoading, refetch } = useProjects()
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [dialogMode, setDialogMode] = useState<'view' | 'create' | 'edit' | 'copy' | 'onlyOffice' | null>(null)
+  const [dialogMode, setDialogMode] = useState<'view' | 'create' | 'edit' | 'copy' | null>(null)
 
   const exportDashboardXlsx = () => {
     const fileUrl = '/template_dashboard2.xlsx'
@@ -61,53 +54,16 @@ export default function Dashboard() {
   const handleEditProject = (project: Project) => { setSelectedProject(project); setDialogMode('edit') }
   const handleCopyProject = (project: Project) => { setSelectedProject(project); setDialogMode('copy') }
 
-
   const handleSaveProject = async (project: Project) => {
     try {
       const dataToSave = {
-        name: project.name,
-        description: project.description,
-        status: project.status,
-        progress: project.progress,
-        startDate: project.startDate,
-        endDate: project.endDate,
-        teamSize: project.teamSize,
-        budget: project.budget,
-        manager: project.manager,
+        ...project,
         category: project.category || "",
         location: project.location || "",
         phases: project.phases || [],
         tasks: project.tasks || [],
         createdAt: project.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        investmentLevel: project.investmentLevel || "",
-        investmentApproval: project.investmentApproval || "",
-        projectGroup: project.projectGroup || "",
-        investor: project.investor || "",
-        investmentType: project.investmentType || "",
-        managementType: project.managementType || "",
-        projectScale: project.projectScale || "",
-        designStepCount: project.designStepCount || 1,
-        designCapacity: project.designCapacity || "",
-        approvalDate: project.approvalDate || "",
-        legalDocuments: project.legalDocuments || [],
-        constructionLevel: project.constructionLevel || "",
-        constructionType: project.constructionType || "",
-        constructionLocation: project.constructionLocation || "",
-        designStandards: project.designStandards || "",
-        goals: project.goals || "",
-        method: project.syntheticMethod || "",
-        notes: project.notes || "",
-        numberTBMT: project.numberTBMT || "",
-        timeExceution: project.timeExceution || "",
-        contractorCompanyName: project.contractorCompanyName || [],
-        contrator: project.contrator || "",
-        contractorPrice: project.contractorPrice || 0,
-        relatedDocuments: project.relatedDocuments || [],
-        roleExecutor: project.roleExecutor || "",
-        capitalProject: project.capitalProject || "",
-        field: project.field || "",
-        documentFolder: project.documentFolder || []
       }
 
       if (dialogMode === "create" || dialogMode === "copy") {
@@ -126,9 +82,52 @@ export default function Dashboard() {
 
   const handleCloseDialog = () => { setDialogMode(null); setSelectedProject(null) }
 
+  // ✅ Chế độ Form (create/edit/copy)
+  if (dialogMode === "create" || dialogMode === "edit" || dialogMode === "copy") {
+    return (
+      <div className="space-y-4 px-3 sm:px-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">
+            {dialogMode === "create"}
+            {dialogMode === "edit"}
+            {dialogMode === "copy"}
+          </h2>
+          
+        </div>
+        <ProjectForm
+          project={selectedProject || undefined}
+          mode={dialogMode}
+          onSave={handleSaveProject}
+          onCancel={handleCloseDialog}
+        />
+      </div>
+    )
+  }
+
+  // ✅ Chế độ Chi tiết (view)
+  if (dialogMode === "view" && selectedProject) {
+    return (
+      <div className="space-y-4 px-3 sm:px-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Chi Tiết Dự Án</h2>
+          <Button variant="outline" onClick={handleCloseDialog}>
+            Quay lại
+          </Button>
+        </div>
+        <ProjectDetail
+          project={selectedProject}
+          onEdit={handleEditProject}
+          onCopy={handleCopyProject}
+          onClose={handleCloseDialog}
+        />
+      </div>
+    )
+  }
+
+  // ✅ Mặc định: Dashboard
   return (
     <div className="space-y-6 px-1 sm:px-6">
-      {/* Header responsive */}
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Bảng Điều Khiển</h1>
@@ -136,9 +135,7 @@ export default function Dashboard() {
             Chào mừng bạn trở lại! Đây là những gì đang diễn ra với các dự án của bạn.
           </p>
         </div>
-
         <div className="flex items-center gap-2">
-
           <Button
             variant="outline"
             size="lg"
@@ -147,21 +144,18 @@ export default function Dashboard() {
             <FileDown className="w-4 h-4 mr-2" />
             Xuất Excel
           </Button>
-
           <Button variant="construction" className="sm:px-4" onClick={handleCreateProject}>
             <Plus className="w-4 h-4" />
-            {/* Hiện chữ trên desktop */}
             <span className="hidden sm:inline ml-2">Dự Án Mới</span>
-            {/* Hiện chữ trên mobile */}
             <span className="sm:hidden ml-2">Tạo dự án mới</span>
           </Button>
         </div>
       </div>
 
-      {/* Stats: đảm bảo co giãn tốt */}
+      {/* Stats */}
       <DashboardStats stats={stats} />
 
-      {/* Nội dung chính: cột đơn trên mobile, 3 cột trên lg */}
+      {/* Nội dung chính */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
           <Card>
@@ -218,58 +212,23 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Hoạt Động Gần Đây</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium">Nguyễn Thị Minh</span> đã cập nhật tiến độ công việc
-                  <div className="text-muted-foreground text-xs">2 giờ trước</div>
-                </div>
-                <div>
-                  <span className="font-medium">Trần Văn Hòa</span> đã tải lên tài liệu mới
-                  <div className="text-muted-foreground text-xs">4 giờ trước</div>
-                </div>
-                <div>
-                  <span className="font-medium">Lê Thị Lan</span> đã hoàn thành mốc quan trọng
-                  <div className="text-muted-foreground text-xs">1 ngày trước</div>
-                </div>
+            <CardContent className="space-y-3 text-sm">
+              <div>
+                <span className="font-medium">Nguyễn Thị Minh</span> đã cập nhật tiến độ công việc
+                <div className="text-muted-foreground text-xs">2 giờ trước</div>
+              </div>
+              <div>
+                <span className="font-medium">Trần Văn Hòa</span> đã tải lên tài liệu mới
+                <div className="text-muted-foreground text-xs">4 giờ trước</div>
+              </div>
+              <div>
+                <span className="font-medium">Lê Thị Lan</span> đã hoàn thành mốc quan trọng
+                <div className="text-muted-foreground text-xs">1 ngày trước</div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Dialogs: full-screen trên mobile */}
-      <Dialog open={dialogMode === 'view'} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-6xl w-[100vw] sm:w-auto h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto p-0 sm:p-0 sm:rounded-xl rounded-none">
-          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
-            <DialogTitle>Chi Tiết Dự Án</DialogTitle>
-          </DialogHeader>
-          {selectedProject && (
-            <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <ProjectDetail
-                project={selectedProject}
-                onEdit={handleEditProject}
-                onCopy={handleCopyProject}
-                onClose={handleCloseDialog}
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={dialogMode === 'create' || dialogMode === 'edit' || dialogMode === 'copy'} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-6xl w-[100vw] sm:w-auto h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto p-0 sm:p-0 sm:rounded-xl rounded-none">
-          <div className="px-4 sm:px-6 py-4 sm:py-6">
-            <ProjectForm
-              project={selectedProject || undefined}
-              mode={dialogMode as 'create' | 'edit' | 'copy'}
-              onSave={handleSaveProject}
-              onCancel={handleCloseDialog}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
     </div>
   )
 }
