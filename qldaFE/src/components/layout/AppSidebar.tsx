@@ -41,8 +41,8 @@ export function AppSidebar() {
 
   const getNavClassName = (path: string) =>
     isActive(path)
-      ? "bg-primary text-primary-foreground font-medium shadow-construction "
-      : "hover:bg-muted transition-colors "
+      ? "bg-blue-100 text-blue-600 font-medium  rounded-md border-r-2 border-r-blue-600 "
+      : "hover:bg-blue-50  border border-transparent rounded-md "
 
   return (
     <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
