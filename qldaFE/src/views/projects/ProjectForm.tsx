@@ -1,17 +1,34 @@
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { BaseDocument, DocumentFolder, ProjectTask, toFileExt } from "@/types/project"
-import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from "@/utils/taskLabels"
-import { Transfer } from "antd"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  BaseDocument,
+  DocumentFolder,
+  ProjectTask,
+  toFileExt,
+} from "@/types/project";
+import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from "@/utils/taskLabels";
+import { Transfer } from "antd";
 import {
   CalendarIcon,
   Save,
@@ -23,36 +40,51 @@ import {
   MapPin,
   Users,
   DollarSign,
-  Pencil
-} from "lucide-react"
-import { Project, ProjectTemplate, ProjectPhase } from "@/types/project"
-import { useProjectTemplates } from "@/hooks/project/useProjectsTemplates"
-import { buildDownloadUrl } from "@/helpers/buildDownloadUrl"
-import { CapitalProject, DesignStepsField, FieldProject, ProjectGroupField } from "@/components/ui/CreatableSelectFieldProps"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
-import { ProjectFormProps } from "@/types/ProjectFormProps"
-import { ChevronDown, ChevronRight } from "lucide-react"
+  Pencil,
+} from "lucide-react";
+import { Project, ProjectTemplate, ProjectPhase } from "@/types/project";
+import { useProjectTemplates } from "@/hooks/project/useProjectsTemplates";
+import { buildDownloadUrl } from "@/helpers/buildDownloadUrl";
+import {
+  CapitalProject,
+  DesignStepsField,
+  FieldProject,
+  ProjectGroupField,
+} from "@/components/ui/CreatableSelectFieldProps";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { ProjectFormProps } from "@/types/ProjectFormProps";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 //img
 import folderIcon from "@/assets/img/ic_folder.png";
-import pocketbaseService from "@/services/PocketBaseService"
-import MyOnlyOffice from "@/components/ui/myOnlyOffice"
+import pocketbaseService from "@/services/PocketBaseService";
+import MyOnlyOffice from "@/components/ui/myOnlyOffice";
+import { ProjectPhaseDetail } from "../projects/ProjectPhaseDetail";
 
-
-export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProps) {
-  const { projectTemplates, loading } = useProjectTemplates()
-  const [expandedPhases, setExpandedPhases] = useState<string[]>([])
-  const [activeTab, setActiveTab] = useState("basic")
-  const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null)
-  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
-  const [isPhaseDialogOpen, setIsPhaseDialogOpen] = useState(false)
-  const [currentPhaseId, setCurrentPhaseId] = useState<string | null>(null)
-  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null)
-  const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null)
-  const [newCompanyName, setNewCompanyName] = useState("")
+export function ProjectForm({
+  project,
+  onSave,
+  onCancel,
+  mode,
+}: ProjectFormProps) {
+  const { projectTemplates, loading } = useProjectTemplates();
+  const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("basic");
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<ProjectTemplate | null>(null);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isPhaseDialogOpen, setIsPhaseDialogOpen] = useState(false);
+  const [currentPhaseId, setCurrentPhaseId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
+  const [editingPhase, setEditingPhase] = useState<ProjectPhase | null>(null);
+  const [newCompanyName, setNewCompanyName] = useState("");
 
   // xác định quyền admin từ custom claims
   const [newTask, setNewTask] = useState<Partial<ProjectTask>>({
@@ -63,30 +95,39 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
     progress: 0,
     legalBasis: "",
     assignUser: "",
-    documentsTask: []
-  })
+    documentsTask: [],
+  });
   const [newPhase, setNewPhase] = useState<Partial<ProjectPhase>>({
     name: "",
     description: "",
     order: 1,
     status: "not_started",
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
     legalBasis: "",
     tasks: [],
-    documentProjectPhase: []
-  })
-  const [isViewerOpen, setIsViewerOpen] = useState(false)
-  const [currentFile, setCurrentFile] = useState<{ id: string; url: string; name: string; type: string } | null>(null)
-  const [documents, setDocuments] = useState<DocumentFolder[]>([])
+    documentProjectPhase: [],
+  });
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [currentFile, setCurrentFile] = useState<{
+    id: string;
+    url: string;
+    name: string;
+    type: string;
+  } | null>(null);
+  const [documents, setDocuments] = useState<DocumentFolder[]>([]);
 
   const [formData, setFormData] = useState<Partial<Project>>({
     name: "",
     description: "",
     status: "planning",
     progress: 0,
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
     teamSize: 1,
     budget: 0,
     manager: "",
@@ -121,41 +162,50 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
     field: "",
     documentFolder: [],
     milestones: [],
-  })
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([])
+  });
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
 
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
 
-  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false)
+  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
 
-  const [newFolderName, setNewFolderName] = useState("")
+  const [newFolderName, setNewFolderName] = useState("");
 
-  const removeFolderById = (folders: DocumentFolder[], targetId: string): DocumentFolder[] => {
+  const removeFolderById = (
+    folders: DocumentFolder[],
+    targetId: string
+  ): DocumentFolder[] => {
     return folders
-      .filter(f => f.id !== targetId)
-      .map(f => ({ ...f, subfolders: removeFolderById(f.subfolders, targetId) }))
-  }
+      .filter((f) => f.id !== targetId)
+      .map((f) => ({
+        ...f,
+        subfolders: removeFolderById(f.subfolders, targetId),
+      }));
+  };
 
   const toggleFolder = (folderId: string) => {
-    setExpandedFolders(prev =>
+    setExpandedFolders((prev) =>
       prev.includes(folderId)
-        ? prev.filter(id => id !== folderId)
+        ? prev.filter((id) => id !== folderId)
         : [...prev, folderId]
-    )
-  }
+    );
+  };
 
   const removeFileInFolder = (
     folders: DocumentFolder[],
     folderId: string,
     fileId: string
   ): DocumentFolder[] => {
-    return folders.map(f => {
+    return folders.map((f) => {
       if (f.id === folderId) {
-        return { ...f, files: f.files.filter(fl => fl.id !== fileId) }
+        return { ...f, files: f.files.filter((fl) => fl.id !== fileId) };
       }
-      return { ...f, subfolders: removeFileInFolder(f.subfolders, folderId, fileId) }
-    })
-  }
+      return {
+        ...f,
+        subfolders: removeFileInFolder(f.subfolders, folderId, fileId),
+      };
+    });
+  };
 
   useEffect(() => {
     if (project && (mode === "edit" || mode === "copy")) {
@@ -163,10 +213,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
         ...project,
         phases: project.phases?.map((phase) => ({
           ...phase,
-          id: mode === "copy" ? `phase-${Date.now()}-${Math.random()}` : phase.id,
+          id:
+            mode === "copy" ? `phase-${Date.now()}-${Math.random()}` : phase.id,
           tasks: phase.tasks.map((task) => ({
             ...task,
-            id: mode === "copy" ? `task-${Date.now()}-${Math.random()}` : task.id,
+            id:
+              mode === "copy" ? `task-${Date.now()}-${Math.random()}` : task.id,
           })),
         })),
         tasks: project.tasks?.map((task) => ({
@@ -182,44 +234,72 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
   }, [project, mode]);
 
   const getDownloadUrl = (fileUrl: string, fileName?: string) =>
-    buildDownloadUrl(fileUrl, fileName)
+    buildDownloadUrl(fileUrl, fileName);
 
   const handleInputChange = (field: keyof Project, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
-    }))
-  }
+      [field]: value,
+    }));
+  };
 
   const togglePhaseTasks = (phaseId: string) => {
-    setExpandedPhases(prev =>
+    setExpandedPhases((prev) =>
       prev.includes(phaseId)
-        ? prev.filter(id => id !== phaseId)
+        ? prev.filter((id) => id !== phaseId)
         : [...prev, phaseId]
-    )
-  }
+    );
+  };
+
+  // DataSource cho Transfer sẽ dựa vào tất cả giai đoạn có sẵn (ở template)
+  const phaseDataSource = projectTemplates.flatMap((t) =>
+    t.phases.map((phase, idx) => ({
+      key: phase.id || `${t.id}-phase-${idx}`,
+      title: phase.name,
+      description: phase.description,
+      templateId: t.id, // ✅ thêm trường này
+    }))
+  );
+  const [orderMap, setOrderMap] = useState<Record<string, number>>({});
+  const [phaseOrderMap, setPhaseOrderMap] = useState<Record<string, number>>(
+    {}
+  );
+  const targetKeys = (formData.phases || []).map((p) => p.id);
+  const [isPhaseDetailOpen, setIsPhaseDetailOpen] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState<ProjectPhase | null>(null);
+  const [leftSelectionOrder, setLeftSelectionOrder] = useState<
+    Record<string, number>
+  >({});
 
   const handleTemplateSelect = (template: ProjectTemplate) => {
-    setSelectedTemplate(template)
-    const phases = template.phases.map((phase, index) => ({
-      ...phase,
-      id: `phase-${Date.now()}-${index}`,
-      tasks: phase.tasks.map((task, taskIndex) => ({
-        ...task,
-        id: `task-${Date.now()}-${index}-${taskIndex}`,
-        phaseId: `phase-${Date.now()}-${index}`
-      }))
-    }))
-    const tasks = phases.flatMap(phase => phase.tasks)
-    setFormData(prev => ({
+    setSelectedTemplate(template);
+
+    const now = Date.now(); // ✅ chỉ gọi 1 lần
+    const phases = template.phases.map((phase, index) => {
+      const phaseId = `phase-${now}-${index}`;
+      return {
+        ...phase,
+        id: phaseId,
+        tasks: phase.tasks.map((task, taskIndex) => ({
+          ...task,
+          id: `task-${now}-${index}-${taskIndex}`,
+          phaseId,
+        })),
+      };
+    });
+
+    const tasks = phases.flatMap((phase) => phase.tasks);
+
+    setFormData((prev) => ({
       ...prev,
       name: prev.name || template.name,
       category: template.category,
       phases,
-      tasks
-    }))
-    setActiveTab("phases")
-  }
+      tasks,
+    }));
+
+    setActiveTab("phases");
+  };
 
   const handleTaskSubmit = async () => {
     const taskData: ProjectTask = {
@@ -235,33 +315,32 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       assignee: newTask.assignee || "",
       startDate: newTask.startDate || null,
       endDate: newTask.endDate || null,
-      dependencies: newTask.dependencies || []
+      dependencies: newTask.dependencies || [],
+    };
 
-    }
-
-    const updatedPhases = formData.phases?.map(phase => {
+    const updatedPhases = formData.phases?.map((phase) => {
       if (phase.id === currentPhaseId) {
         const updatedTasks = editingTask
-          ? phase.tasks.map(t => t.id === editingTask.id ? taskData : t)
-          : [...phase.tasks, taskData]
-        return { ...phase, tasks: updatedTasks }
+          ? phase.tasks.map((t) => (t.id === editingTask.id ? taskData : t))
+          : [...phase.tasks, taskData];
+        return { ...phase, tasks: updatedTasks };
       }
-      return phase
-    })
+      return phase;
+    });
 
     const updatedTasks = editingTask
-      ? formData.tasks?.map(t => t.id === editingTask.id ? taskData : t)
-      : [...(formData.tasks || []), taskData]
+      ? formData.tasks?.map((t) => (t.id === editingTask.id ? taskData : t))
+      : [...(formData.tasks || []), taskData];
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       phases: updatedPhases,
-      tasks: updatedTasks
-    }))
+      tasks: updatedTasks,
+    }));
 
-    setIsTaskDialogOpen(false)
-    resetTaskForm()
-  }
+    setIsTaskDialogOpen(false);
+    resetTaskForm();
+  };
 
   const resetTaskForm = () => {
     setNewTask({
@@ -271,15 +350,17 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       priority: "medium",
       progress: 0,
       legalBasis: "",
-      documentsTask: []
-    })
-    setEditingTask(null)
-    setCurrentPhaseId(null)
-  }
+      documentsTask: [],
+    });
+    setEditingTask(null);
+    setCurrentPhaseId(null);
+  };
 
   const handlePhaseSubmit = () => {
     const phaseData: ProjectPhase = {
-      id: editingPhase ? editingPhase.id : `phase-${Date.now()}-${Math.random()}`,
+      id: editingPhase
+        ? editingPhase.id
+        : `phase-${Date.now()}-${Math.random()}`,
       name: newPhase.name || "",
       description: newPhase.description || "",
       order: newPhase.order || 1,
@@ -288,19 +369,21 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       endDate: newPhase.endDate,
       legalBasis: newPhase.legalBasis || "",
       tasks: editingPhase ? editingPhase.tasks : [],
-      documentProjectPhase: editingPhase ? editingPhase.documentProjectPhase : []
-    }
+      documentProjectPhase: editingPhase
+        ? editingPhase.documentProjectPhase
+        : [],
+    };
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       phases: editingPhase
-        ? prev.phases?.map(p => p.id === editingPhase.id ? phaseData : p)
-        : [...(prev.phases || []), phaseData]
-    }))
+        ? prev.phases?.map((p) => (p.id === editingPhase.id ? phaseData : p))
+        : [...(prev.phases || []), phaseData],
+    }));
 
-    setIsPhaseDialogOpen(false)
-    resetPhaseForm()
-  }
+    setIsPhaseDialogOpen(false);
+    resetPhaseForm();
+  };
 
   const resetPhaseForm = () => {
     setNewPhase({
@@ -308,18 +391,20 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       description: "",
       order: (formData.phases?.length || 0) + 1,
       status: "not_started",
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
       legalBasis: "",
       tasks: [],
-      documentProjectPhase: []
-    })
-    setEditingPhase(null)
-  }
+      documentProjectPhase: [],
+    });
+    setEditingPhase(null);
+  };
 
   const handleAddTask = (phaseId: string) => {
-    setCurrentPhaseId(phaseId)
-    setEditingTask(null)
+    setCurrentPhaseId(phaseId);
+    setEditingTask(null);
     setNewTask({
       name: "",
       description: "",
@@ -327,20 +412,20 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       priority: "medium",
       progress: 0,
       legalBasis: "",
-      documentsTask: []
-    })
-    setIsTaskDialogOpen(true)
-  }
+      documentsTask: [],
+    });
+    setIsTaskDialogOpen(true);
+  };
 
   const handleEditTask = (task: ProjectTask, phaseId: string) => {
-    setEditingTask(task)
-    setNewTask(task)
-    setCurrentPhaseId(phaseId)
-    setIsTaskDialogOpen(true)
-  }
+    setEditingTask(task);
+    setNewTask(task);
+    setCurrentPhaseId(phaseId);
+    setIsTaskDialogOpen(true);
+  };
 
   const handleEditPhase = (phase: ProjectPhase) => {
-    setEditingPhase(phase)
+    setEditingPhase(phase);
     setNewPhase({
       name: phase.name,
       description: phase.description,
@@ -350,13 +435,13 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       endDate: phase.endDate,
       legalBasis: phase.legalBasis,
       tasks: phase.tasks,
-      documentProjectPhase: phase.documentProjectPhase
-    })
-    setIsPhaseDialogOpen(true)
-  }
+      documentProjectPhase: phase.documentProjectPhase,
+    });
+    setIsPhaseDialogOpen(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // const projectData = {
     //   ...formData,
     //   documentFolder: documents,
@@ -368,87 +453,104 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       ...formData,
       documentFolder: documents,
       ...(mode === "edit" && { id: project?.id }),
-      createdAt: mode === "create" ? new Date().toISOString() : project?.createdAt,
-      updatedAt: new Date().toISOString()
-    } as Project
-    onSave(projectData)
-  }
+      createdAt:
+        mode === "create" ? new Date().toISOString() : project?.createdAt,
+      updatedAt: new Date().toISOString(),
+    } as Project;
+    onSave(projectData);
+  };
 
   const handleAddFolder = () => {
     const folder: DocumentFolder = {
       id: `folder-${Date.now()}-${Math.random()}`,
       name: newFolderName,
       subfolders: [],
-      files: []
-    }
+      files: [],
+    };
 
-    const next =
-      currentFolderId
-        ? updateFolder(documents, currentFolderId, folder)
-        : [...documents, folder]
+    const next = currentFolderId
+      ? updateFolder(documents, currentFolderId, folder)
+      : [...documents, folder];
 
-    setDocuments(next)
-    setFormData(prev => ({ ...prev, documentFolder: next }))
+    setDocuments(next);
+    setFormData((prev) => ({ ...prev, documentFolder: next }));
 
-    setNewFolderName("")
-    setIsFolderDialogOpen(false)
-  }
+    setNewFolderName("");
+    setIsFolderDialogOpen(false);
+  };
 
-
-  const updateFolder = (folders: DocumentFolder[], parentId: string, newFolder: DocumentFolder): DocumentFolder[] => {
-    return folders.map(folder => {
+  const updateFolder = (
+    folders: DocumentFolder[],
+    parentId: string,
+    newFolder: DocumentFolder
+  ): DocumentFolder[] => {
+    return folders.map((folder) => {
       if (folder.id === parentId) {
-        return { ...folder, subfolders: [...folder.subfolders, newFolder] }
+        return { ...folder, subfolders: [...folder.subfolders, newFolder] };
       }
-      return { ...folder, subfolders: updateFolder(folder.subfolders, parentId, newFolder) }
-    })
-  }
+      return {
+        ...folder,
+        subfolders: updateFolder(folder.subfolders, parentId, newFolder),
+      };
+    });
+  };
 
   const handleAddFile = async (folderId: string, files: FileList) => {
+    const newFiles: BaseDocument[] = await Promise.all(
+      Array.from(files).map(async (file) => {
+        const attachmentFile = await pocketbaseService.uploadFile(
+          file,
+          file.name
+        );
+        return {
+          id: attachmentFile.id,
+          name: file.name,
+          url: pocketbaseService.getFileUrl(attachmentFile),
+          type: toFileExt(file.name.split(".").pop()),
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: "Bạn",
+        } as BaseDocument;
+      })
+    );
 
-    const newFiles: BaseDocument[] = await Promise.all(Array.from(files).map(async file => {
-      const attachmentFile = await pocketbaseService.uploadFile(file, file.name);
-      return {
-        id: attachmentFile.id,
-        name: file.name,
-        url: pocketbaseService.getFileUrl(attachmentFile),
-        type: toFileExt(file.name.split('.').pop()),
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: 'Bạn',
-      } as BaseDocument
-    }));
-
-    setDocuments(prevDocs => {
-      const next = updateFolderWithFiles(prevDocs, folderId, newFiles)
-      setFormData(prev => ({ ...prev, documentFolder: next }))
-      return next
-    })
-  }
+    setDocuments((prevDocs) => {
+      const next = updateFolderWithFiles(prevDocs, folderId, newFiles);
+      setFormData((prev) => ({ ...prev, documentFolder: next }));
+      return next;
+    });
+  };
 
   const updateFolderWithFiles = (
     folders: DocumentFolder[],
     folderId: string,
     newFiles: BaseDocument[]
   ): DocumentFolder[] => {
-    let changed = false
-    const next = folders.map(folder => {
+    let changed = false;
+    const next = folders.map((folder) => {
       if (folder.id === folderId) {
-        changed = true
-        return { ...folder, files: [...folder.files, ...newFiles] }
+        changed = true;
+        return { ...folder, files: [...folder.files, ...newFiles] };
       }
-      const updatedSubs = updateFolderWithFiles(folder.subfolders, folderId, newFiles)
+      const updatedSubs = updateFolderWithFiles(
+        folder.subfolders,
+        folderId,
+        newFiles
+      );
       if (updatedSubs !== folder.subfolders) {
-        changed = true
-        return { ...folder, subfolders: updatedSubs }
+        changed = true;
+        return { ...folder, subfolders: updatedSubs };
       }
-      return folder
-    })
-    return changed ? next : folders
-  }
+      return folder;
+    });
+    return changed ? next : folders;
+  };
 
-  const renderFolderTree = (folders: DocumentFolder[], parentId: string | null = null) => {
-    return folders.map(folder => {
-      const isExpanded = expandedFolders.includes(folder.id)
+  const renderFolderTree = (
+    folders: DocumentFolder[],
+    parentId: string | null = null
+  ) => {
+    return folders.map((folder) => {
+      const isExpanded = expandedFolders.includes(folder.id);
 
       return (
         <div key={folder.id} className="ml-4">
@@ -473,8 +575,8 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
               variant="ghost"
               size="sm"
               onClick={() => {
-                setCurrentFolderId(folder.id)
-                setIsFolderDialogOpen(true)
+                setCurrentFolderId(folder.id);
+                setIsFolderDialogOpen(true);
               }}
             >
               <Plus className="w-4 h-4" />
@@ -498,11 +600,14 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
               variant="ghost"
               size="icon"
               onClick={() => {
-                setDocuments(prev => removeFolderById(prev, folder.id))
-                setFormData(prev => ({
+                setDocuments((prev) => removeFolderById(prev, folder.id));
+                setFormData((prev) => ({
                   ...prev,
-                  documentFolder: removeFolderById(prev.documentFolder || [], folder.id),
-                }))
+                  documentFolder: removeFolderById(
+                    prev.documentFolder || [],
+                    folder.id
+                  ),
+                }));
               }}
             >
               <Trash2 className="w-4 h-4" />
@@ -513,9 +618,14 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
             <>
               {folder.files.length > 0 && (
                 <div className="ml-6 space-y-2">
-                  {folder.files.map(file => (
+                  {folder.files.map((file) => (
                     <div key={file.id} className="flex items-center gap-2">
-                      <a href={getDownloadUrl(file.url, file.name)} download={file.name} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={getDownloadUrl(file.url, file.name)}
+                        download={file.name}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         {file.name}
                       </a>
                       <Button
@@ -523,8 +633,13 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setCurrentFile({ id: file.id, url: file.url, name: file.name, type: file.type })
-                          setIsViewerOpen(true)
+                          setCurrentFile({
+                            id: file.id,
+                            url: file.url,
+                            name: file.name,
+                            type: file.type,
+                          });
+                          setIsViewerOpen(true);
                         }}
                       >
                         Xem
@@ -534,11 +649,17 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          setDocuments(prev => removeFileInFolder(prev, folder.id, file.id))
-                          setFormData(prev => ({
+                          setDocuments((prev) =>
+                            removeFileInFolder(prev, folder.id, file.id)
+                          );
+                          setFormData((prev) => ({
                             ...prev,
-                            documentFolder: removeFileInFolder(prev.documentFolder || [], folder.id, file.id)
-                          }))
+                            documentFolder: removeFileInFolder(
+                              prev.documentFolder || [],
+                              folder.id,
+                              file.id
+                            ),
+                          }));
                         }}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -548,27 +669,28 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 </div>
               )}
 
-              {folder.subfolders.length > 0 && renderFolderTree(folder.subfolders, folder.id)}
+              {folder.subfolders.length > 0 &&
+                renderFolderTree(folder.subfolders, folder.id)}
             </>
           )}
         </div>
-      )
-    })
-  }
+      );
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">
-            {mode === 'create' && 'Tạo Dự Án Mới'}
-            {mode === 'edit' && 'Chỉnh Sửa Dự Án'}
-            {mode === 'copy' && 'Sao Chép Dự Án'}
+            {mode === "create" && "Tạo Dự Án Mới"}
+            {mode === "edit" && "Chỉnh Sửa Dự Án"}
+            {mode === "copy" && "Sao Chép Dự Án"}
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            {mode === 'create' && 'Tạo một dự án mới từ bản mẫu hoặc tùy chỉnh'}
-            {mode === 'edit' && 'Cập nhật thông tin dự án'}
-            {mode === 'copy' && 'Tạo bản sao của dự án hiện có'}
+            {mode === "create" && "Tạo một dự án mới từ bản mẫu hoặc tùy chỉnh"}
+            {mode === "edit" && "Cập nhật thông tin dự án"}
+            {mode === "copy" && "Tạo bản sao của dự án hiện có"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -578,19 +700,33 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
           </Button>
           <Button type="submit">
             <Save className="w-4 h-4 mr-2" />
-            {mode === 'edit' ? 'Cập Nhật' : 'Tạo Dự Án'}
+            {mode === "edit" ? "Cập Nhật" : "Tạo Dự Án"}
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList
-          className=" flex w-full flex-nowrap overflow-x-auto gap-2 p-1 sm:grid sm:grid-cols-5 sm:gap-0 sm:p-1"
-        >        <TabsTrigger className="shrink-0" value="template">Bản Mẫu</TabsTrigger>
-          <TabsTrigger className="shrink-0" value="basic">Thông Tin Cơ Bản</TabsTrigger>
-          <TabsTrigger className="shrink-0" value="phases">Giai Đoạn</TabsTrigger>
-          <TabsTrigger className="shrink-0" value="settings">Cài Đặt</TabsTrigger>
-          <TabsTrigger className="shrink-0" value="documentation">Tài liệu dự án</TabsTrigger>
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
+        <TabsList className=" flex w-full flex-nowrap overflow-x-auto gap-2 p-1 sm:grid sm:grid-cols-4 sm:gap-0 sm:p-1">
+          {" "}
+          {/* <TabsTrigger className="shrink-0" value="template">
+            Bản Mẫu
+          </TabsTrigger> */}
+          <TabsTrigger className="shrink-0" value="basic">
+            Thông Tin Cơ Bản
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="phases">
+            Giai Đoạn
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="settings">
+            Cài Đặt
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="documentation">
+            Tài liệu dự án
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="template" className="space-y-4">
@@ -609,15 +745,25 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   projectTemplates.map((template) => (
                     <Card
                       key={template.id}
-                      className={`cursor-pointer transition-colors hover:bg-muted/50 ${selectedTemplate?.id === template.id ? "ring-2 ring-primary" : ""}`}
+                      className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                        selectedTemplate?.id === template.id
+                          ? "ring-2 ring-primary"
+                          : ""
+                      }`}
                       onClick={() => handleTemplateSelect(template)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="font-semibold mb-1">{template.name}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
-                            <Badge variant="outline">{template.phases.length} giai đoạn</Badge>
+                            <h3 className="font-semibold mb-1">
+                              {template.name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {template.description}
+                            </p>
+                            <Badge variant="outline">
+                              {template.phases.length} giai đoạn
+                            </Badge>
                           </div>
                           <Building className="w-8 h-8 text-muted-foreground" />
                         </div>
@@ -634,9 +780,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setSelectedTemplate(null)
-                    setFormData(prev => ({ ...prev, phases: [], tasks: [] }))
-                    setActiveTab("basic")
+                    setSelectedTemplate(null);
+                    setFormData((prev) => ({ ...prev, phases: [], tasks: [] }));
+                    setActiveTab("basic");
                   }}
                 >
                   Tạo Dự Án Trống
@@ -660,8 +806,8 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setCurrentFolderId(null)
-                    setIsFolderDialogOpen(true)
+                    setCurrentFolderId(null);
+                    setIsFolderDialogOpen(true);
                   }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -673,13 +819,14 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
               ) : (
                 <div className="text-center py-8">
                   <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">Chưa có thư mục nào được tạo</p>
+                  <p className="text-muted-foreground mb-4">
+                    Chưa có thư mục nào được tạo
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
-
 
         <TabsContent value="basic" className="space-y-4">
           <div className="grid grid-cols-1 gap-6">
@@ -696,7 +843,7 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   <Input
                     id="name"
                     value={formData.name || ""}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder="Nhập tên dự án"
                     required
                   />
@@ -707,7 +854,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   <Textarea
                     id="description"
                     value={formData.description || ""}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("description", e.target.value)
+                    }
                     placeholder="Mô tả chi tiết về dự án"
                     rows={3}
                   />
@@ -720,7 +869,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     <Input
                       id="location"
                       value={formData.location || ""}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("location", e.target.value)
+                      }
                       placeholder="Địa điểm thực hiện dự án"
                       className="pl-10"
                     />
@@ -731,7 +882,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   <Label htmlFor="status">Trạng Thái</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) => handleInputChange('status', value)}
+                    onValueChange={(value) =>
+                      handleInputChange("status", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -769,7 +922,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                       <select
                         className="border border-input rounded-md px-3 py-2 w-full bg-background"
                         value={formData.constructionLevel || ""}
-                        onChange={(e) => handleInputChange("constructionLevel", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("constructionLevel", e.target.value)
+                        }
                       >
                         <option value="">-- Chọn cấp công trình --</option>
                         <option value="1">1</option>
@@ -789,54 +944,102 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     <div className="space-y-2">
                       <DesignStepsField
                         value={formData.designStepCount || 1}
-                        onChange={(v) => handleInputChange("designStepCount", v)}
+                        onChange={(v) =>
+                          handleInputChange("designStepCount", v)
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Cấp QD Chủ Trương Đầu Tư</Label>
-                    <Input value={formData.investmentLevel || ""} onChange={(e) => handleInputChange('investmentLevel', e.target.value)} />
+                    <Input
+                      value={formData.investmentLevel || ""}
+                      onChange={(e) =>
+                        handleInputChange("investmentLevel", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Phê Duyệt Quyết Định Đầu Tư</Label>
-                    <Input value={formData.investmentApproval || ""} onChange={(e) => handleInputChange('investmentApproval', e.target.value)} />
+                    <Input
+                      value={formData.investmentApproval || ""}
+                      onChange={(e) =>
+                        handleInputChange("investmentApproval", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Chủ Đầu Tư</Label>
-                    <Input value={formData.investor || ""} onChange={(e) => handleInputChange('investor', e.target.value)} />
+                    <Input
+                      value={formData.investor || ""}
+                      onChange={(e) =>
+                        handleInputChange("investor", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Hình Thức Đầu Tư</Label>
-                    <Input value={formData.investmentType || ""} onChange={(e) => handleInputChange('investmentType', e.target.value)} />
+                    <Input
+                      value={formData.investmentType || ""}
+                      onChange={(e) =>
+                        handleInputChange("investmentType", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Loại Hình Quản Lý</Label>
-                    <Input value={formData.managementType || ""} onChange={(e) => handleInputChange('managementType', e.target.value)} />
+                    <Input
+                      value={formData.managementType || ""}
+                      onChange={(e) =>
+                        handleInputChange("managementType", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Quy Mô Dự Án</Label>
-                    <Input value={formData.projectScale || ""} onChange={(e) => handleInputChange('projectScale', e.target.value)} />
+                    <Input
+                      value={formData.projectScale || ""}
+                      onChange={(e) =>
+                        handleInputChange("projectScale", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Đơn Vị Thiết Kế</Label>
-                    <Input value={formData.designCapacity || ""} onChange={(e) => handleInputChange('designCapacity', e.target.value)} />
+                    <Input
+                      value={formData.designCapacity || ""}
+                      onChange={(e) =>
+                        handleInputChange("designCapacity", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Ngày Lập Quyết Toán</Label>
-                    <Input type="date" value={formData.approvalDate || ""} onChange={(e) => handleInputChange('approvalDate', e.target.value)} />
+                    <Input
+                      type="date"
+                      value={formData.approvalDate || ""}
+                      onChange={(e) =>
+                        handleInputChange("approvalDate", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Loại Công Trình</Label>
-                    <Input value={formData.constructionType || ""} onChange={(e) => handleInputChange('constructionType', e.target.value)} />
+                    <Input
+                      value={formData.constructionType || ""}
+                      onChange={(e) =>
+                        handleInputChange("constructionType", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2 col-span-2">
@@ -844,26 +1047,49 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     <select
                       className="border rounded p-2 w-full"
                       value={formData.syntheticMethod || ""}
-                      onChange={(e) => handleInputChange('syntheticMethod', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("syntheticMethod", e.target.value)
+                      }
                     >
                       <option value="">-- Chọn phương pháp --</option>
                       <option value="Tự tổng hợp">Tự tổng hợp</option>
-                      <option value="Tổng hợp từ hệ thống">Tổng hợp từ hệ thống</option>
-                      <option value="Tổng hợp từ báo cáo định kỳ">Tổng hợp từ báo cáo định kỳ</option>
-                      <option value="Kế thừa dự án trước">Kế thừa dự án trước</option>
-                      <option value="Tổng hợp từ nhà thầu">Tổng hợp từ nhà thầu</option>
-                      <option value="Tổng hợp từ đơn vị tư vấn">Tổng hợp từ đơn vị tư vấn</option>
+                      <option value="Tổng hợp từ hệ thống">
+                        Tổng hợp từ hệ thống
+                      </option>
+                      <option value="Tổng hợp từ báo cáo định kỳ">
+                        Tổng hợp từ báo cáo định kỳ
+                      </option>
+                      <option value="Kế thừa dự án trước">
+                        Kế thừa dự án trước
+                      </option>
+                      <option value="Tổng hợp từ nhà thầu">
+                        Tổng hợp từ nhà thầu
+                      </option>
+                      <option value="Tổng hợp từ đơn vị tư vấn">
+                        Tổng hợp từ đơn vị tư vấn
+                      </option>
                     </select>
                   </div>
 
                   <div className="space-y-2 col-span-2">
                     <Label>Tiêu Chuẩn Thiết Kế</Label>
-                    <Input value={formData.designStandards || ""} onChange={(e) => handleInputChange('designStandards', e.target.value)} />
+                    <Input
+                      value={formData.designStandards || ""}
+                      onChange={(e) =>
+                        handleInputChange("designStandards", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div className="space-y-2 col-span-2">
                     <Label>Mục Tiêu</Label>
-                    <Textarea value={formData.goals || ""} onChange={(e) => handleInputChange('goals', e.target.value)} rows={2} />
+                    <Textarea
+                      value={formData.goals || ""}
+                      onChange={(e) =>
+                        handleInputChange("goals", e.target.value)
+                      }
+                      rows={2}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -880,7 +1106,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                       <Label>Số TBMT</Label>
                       <Input
                         value={formData.numberTBMT || ""}
-                        onChange={(e) => handleInputChange("numberTBMT", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("numberTBMT", e.target.value)
+                        }
                       />
                     </div>
 
@@ -888,13 +1116,16 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                       <Label>Thời Gian Thực Hiện</Label>
                       <Input
                         value={formData.timeExceution || ""}
-                        onChange={(e) => handleInputChange("timeExceution", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("timeExceution", e.target.value)
+                        }
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label>
-                        Giá Trúng Thầu (VNĐ) <span className="text-red-500">*</span>
+                        Giá Trúng Thầu (VNĐ){" "}
+                        <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
@@ -904,7 +1135,10 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                           min="0"
                           value={formData.contractorPrice || 0}
                           onChange={(e) =>
-                            handleInputChange("contractorPrice", parseInt(e.target.value))
+                            handleInputChange(
+                              "contractorPrice",
+                              parseInt(e.target.value)
+                            )
                           }
                           className="pl-10"
                         />
@@ -915,7 +1149,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                       <Label>Vai Trò Thực Hiện</Label>
                       <Input
                         value={formData.roleExecutor || ""}
-                        onChange={(e) => handleInputChange("roleExecutor", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("roleExecutor", e.target.value)
+                        }
                       />
                     </div>
 
@@ -928,73 +1164,90 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
                           const newDocs = files.map((file) => ({
-                            id: globalThis.crypto?.randomUUID?.() ?? `file-${Date.now()}-${Math.random()}`,
+                            id:
+                              globalThis.crypto?.randomUUID?.() ??
+                              `file-${Date.now()}-${Math.random()}`,
                             name: file.name,
                             url: URL.createObjectURL(file),
-                            type: toFileExt(file.name.split('.').pop()),
+                            type: toFileExt(file.name.split(".").pop()),
                             uploadedAt: new Date().toISOString(),
-                            uploadedBy: 'Bạn',
+                            uploadedBy: "Bạn",
                           }));
                           setFormData((prev) => ({
                             ...prev,
-                            relatedDocuments: [...(prev.relatedDocuments || []), ...newDocs]
+                            relatedDocuments: [
+                              ...(prev.relatedDocuments || []),
+                              ...newDocs,
+                            ],
                           }));
                         }}
                       />
-                      {formData.relatedDocuments && formData.relatedDocuments.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {formData.relatedDocuments.map((doc) => {
-                            const href = getDownloadUrl(doc.url || "#", doc.name);
-                            return (
-                              <div key={doc.id} className="inline-flex items-center gap-2">
-                                <a
-                                  href={href}
-                                  download={doc.name}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm text-blue-700 max-w-[200px]"
-                                  title="Tải về để xem"
+                      {formData.relatedDocuments &&
+                        formData.relatedDocuments.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {formData.relatedDocuments.map((doc) => {
+                              const href = getDownloadUrl(
+                                doc.url || "#",
+                                doc.name
+                              );
+                              return (
+                                <div
+                                  key={doc.id}
+                                  className="inline-flex items-center gap-2"
                                 >
-                                  <FileText className="w-4 h-4" />
-                                  <span className="truncate">{doc.name}</span>
-                                </a>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setCurrentFile({
-                                      id: doc.id,
-                                      url: doc.url,
-                                      name: doc.name,
-                                      type: doc.name.split(".").pop()?.toLowerCase() || "",
-                                    });
-                                    setIsViewerOpen(true);
-                                  }}
-                                >
-                                  Xem
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      relatedDocuments: prev.relatedDocuments?.filter(
-                                        (d) => d.id !== doc.id
-                                      ),
-                                    }));
-                                  }}
-                                  aria-label="Xóa"
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                                  <a
+                                    href={href}
+                                    download={doc.name}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm text-blue-700 max-w-[200px]"
+                                    title="Tải về để xem"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    <span className="truncate">{doc.name}</span>
+                                  </a>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setCurrentFile({
+                                        id: doc.id,
+                                        url: doc.url,
+                                        name: doc.name,
+                                        type:
+                                          doc.name
+                                            .split(".")
+                                            .pop()
+                                            ?.toLowerCase() || "",
+                                      });
+                                      setIsViewerOpen(true);
+                                    }}
+                                  >
+                                    Xem
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        relatedDocuments:
+                                          prev.relatedDocuments?.filter(
+                                            (d) => d.id !== doc.id
+                                          ),
+                                      }));
+                                    }}
+                                    aria-label="Xóa"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -1013,8 +1266,8 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                               v === "Độc lập"
                                 ? [prev.contractorCompanyName?.[0] || ""]
                                 : Array.isArray(prev.contractorCompanyName)
-                                  ? prev.contractorCompanyName.filter(Boolean)
-                                  : [],
+                                ? prev.contractorCompanyName.filter(Boolean)
+                                : [],
                           }));
                         }}
                       >
@@ -1054,31 +1307,33 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
 
                         {(formData.contractorCompanyName?.length ?? 0) > 0 && (
                           <div className="flex flex-wrap gap-2 pt-2">
-                            {formData.contractorCompanyName!.map((name, idx) => (
-                              <Badge
-                                key={`${name}-${idx}`}
-                                variant="secondary"
-                                className="gap-1"
-                              >
-                                {name}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      contractorCompanyName: (
-                                        prev.contractorCompanyName || []
-                                      ).filter((_, i) => i !== idx),
-                                    }))
-                                  }
-                                  aria-label="Xóa công ty"
-                                  title="Xóa"
-                                  className="inline-flex"
+                            {formData.contractorCompanyName!.map(
+                              (name, idx) => (
+                                <Badge
+                                  key={`${name}-${idx}`}
+                                  variant="secondary"
+                                  className="gap-1"
                                 >
-                                  <X className="w-3 h-3 ml-1" />
-                                </button>
-                              </Badge>
-                            ))}
+                                  {name}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        contractorCompanyName: (
+                                          prev.contractorCompanyName || []
+                                        ).filter((_, i) => i !== idx),
+                                      }))
+                                    }
+                                    aria-label="Xóa công ty"
+                                    title="Xóa"
+                                    className="inline-flex"
+                                  >
+                                    <X className="w-3 h-3 ml-1" />
+                                  </button>
+                                </Badge>
+                              )
+                            )}
                           </div>
                         )}
                       </div>
@@ -1112,16 +1367,34 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     <Label>Ngày Bắt Đầu</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.startDate ? format(new Date(formData.startDate), "dd/MM/yyyy", { locale: vi }) : "Chọn ngày"}
+                          {formData.startDate
+                            ? format(
+                                new Date(formData.startDate),
+                                "dd/MM/yyyy",
+                                { locale: vi }
+                              )
+                            : "Chọn ngày"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={formData.startDate ? new Date(formData.startDate) : undefined}
-                          onSelect={(date) => handleInputChange('startDate', date?.toISOString().split('T')[0])}
+                          selected={
+                            formData.startDate
+                              ? new Date(formData.startDate)
+                              : undefined
+                          }
+                          onSelect={(date) =>
+                            handleInputChange(
+                              "startDate",
+                              date?.toISOString().split("T")[0]
+                            )
+                          }
                           initialFocus
                         />
                       </PopoverContent>
@@ -1132,16 +1405,32 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     <Label>Ngày Kết Thúc</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.endDate ? format(new Date(formData.endDate), "dd/MM/yyyy", { locale: vi }) : "Chọn ngày"}
+                          {formData.endDate
+                            ? format(new Date(formData.endDate), "dd/MM/yyyy", {
+                                locale: vi,
+                              })
+                            : "Chọn ngày"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={formData.endDate ? new Date(formData.endDate) : undefined}
-                          onSelect={(date) => handleInputChange('endDate', date?.toISOString().split('T')[0])}
+                          selected={
+                            formData.endDate
+                              ? new Date(formData.endDate)
+                              : undefined
+                          }
+                          onSelect={(date) =>
+                            handleInputChange(
+                              "endDate",
+                              date?.toISOString().split("T")[0]
+                            )
+                          }
                           initialFocus
                         />
                       </PopoverContent>
@@ -1156,7 +1445,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     <Input
                       id="manager"
                       value={formData.manager || ""}
-                      onChange={(e) => handleInputChange('manager', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("manager", e.target.value)
+                      }
                       placeholder="Tên người quản lý dự án"
                       className="pl-10"
                     />
@@ -1172,7 +1463,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                       type="number"
                       min="1"
                       value={formData.teamSize || 1}
-                      onChange={(e) => handleInputChange('teamSize', parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleInputChange("teamSize", parseInt(e.target.value))
+                      }
                       className="pl-10"
                     />
                   </div>
@@ -1187,7 +1480,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                       type="number"
                       min="0"
                       value={formData.budget || 0}
-                      onChange={(e) => handleInputChange('budget', parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleInputChange("budget", parseInt(e.target.value))
+                      }
                       className="pl-10"
                     />
                   </div>
@@ -1197,13 +1492,18 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
           </div>
         </TabsContent>
 
-        <Dialog open={isTaskDialogOpen} onOpenChange={(open) => {
-          setIsTaskDialogOpen(open)
-          if (!open) resetTaskForm()
-        }}>
+        <Dialog
+          open={isTaskDialogOpen}
+          onOpenChange={(open) => {
+            setIsTaskDialogOpen(open);
+            if (!open) resetTaskForm();
+          }}
+        >
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>{editingTask ? 'Sửa Công Việc' : 'Thêm Công Việc'}</DialogTitle>
+              <DialogTitle>
+                {editingTask ? "Sửa Công Việc" : "Thêm Công Việc"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -1211,7 +1511,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Input
                   id="taskName"
                   value={newTask.name || ""}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="Nhập tên công việc"
                   required
                 />
@@ -1222,21 +1524,29 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   Người thực hiện *
                   <br />
                   <span className="text-sm block text-red-400">
-                    (Chỉ quyền admin mới dùng được chức năng này,
-                    nếu quyên nhân viên thì sẽ tự gán tên vào nhiệm vụ)
+                    (Chỉ quyền admin mới dùng được chức năng này, nếu quyên nhân
+                    viên thì sẽ tự gán tên vào nhiệm vụ)
                   </span>
                 </Label>
                 <Select
-                  value={newTask.assignUser || ""}                              // ✅ binding giá trị
-                  onValueChange={(v) =>                                          // ✅ cập nhật state
-                    setNewTask((prev) => ({ ...prev, assignUser: v, assignee: v }))
+                  value={newTask.assignUser || ""} // ✅ binding giá trị
+                  onValueChange={(
+                    v // ✅ cập nhật state
+                  ) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      assignUser: v,
+                      assignee: v,
+                    }))
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user_test_01">Phạm Trường Sơn</SelectItem>
+                    <SelectItem value="user_test_01">
+                      Phạm Trường Sơn
+                    </SelectItem>
                     <SelectItem value="user_test_02">Phạm Văn Dương</SelectItem>
                     <SelectItem value="user_test_03">Phạm Văn Trung</SelectItem>
                     <SelectItem value="user_test_04">Nguyễn Văn D</SelectItem>
@@ -1249,7 +1559,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Textarea
                   id="taskDescription"
                   value={newTask.description || ""}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Mô tả chi tiết về công việc"
                   rows={3}
                 />
@@ -1262,7 +1577,11 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     onValueChange={(value) =>
                       setNewTask((prev) => ({
                         ...prev,
-                        status: value as 'not_started' | 'in_progress' | 'completed' | 'blocked'
+                        status: value as
+                          | "not_started"
+                          | "in_progress"
+                          | "completed"
+                          | "blocked",
                       }))
                     }
                   >
@@ -1271,7 +1590,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="not_started">Chưa Bắt Đầu</SelectItem>
-                      <SelectItem value="in_progress">Đang Thực Hiện</SelectItem>
+                      <SelectItem value="in_progress">
+                        Đang Thực Hiện
+                      </SelectItem>
                       <SelectItem value="completed">Hoàn Thành</SelectItem>
                       <SelectItem value="on_hold">Tạm Dừng</SelectItem>
                     </SelectContent>
@@ -1284,7 +1605,11 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     onValueChange={(value) =>
                       setNewTask((prev) => ({
                         ...prev,
-                        priority: value as 'low' | 'medium' | 'high' | 'critical'
+                        priority: value as
+                          | "low"
+                          | "medium"
+                          | "high"
+                          | "critical",
                       }))
                     }
                   >
@@ -1307,7 +1632,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   min="0"
                   max="100"
                   value={newTask.progress || 0}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      progress: parseInt(e.target.value),
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1315,7 +1645,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Input
                   id="taskLegalBasis"
                   value={newTask.legalBasis || ""}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, legalBasis: e.target.value }))}
+                  onChange={(e) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      legalBasis: e.target.value,
+                    }))
+                  }
                   placeholder="Nhập cơ sở pháp lý (nếu có)"
                 />
               </div>
@@ -1325,8 +1660,8 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setIsTaskDialogOpen(false)
-                  resetTaskForm()
+                  setIsTaskDialogOpen(false);
+                  resetTaskForm();
                 }}
               >
                 Hủy
@@ -1336,19 +1671,24 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 onClick={handleTaskSubmit}
                 disabled={!newTask.name}
               >
-                {editingTask ? 'Cập Nhật' : 'Thêm Công Việc'}
+                {editingTask ? "Cập Nhật" : "Thêm Công Việc"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isPhaseDialogOpen} onOpenChange={(open) => {
-          setIsPhaseDialogOpen(open)
-          if (!open) resetPhaseForm()
-        }}>
+        <Dialog
+          open={isPhaseDialogOpen}
+          onOpenChange={(open) => {
+            setIsPhaseDialogOpen(open);
+            if (!open) resetPhaseForm();
+          }}
+        >
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>{editingPhase ? 'Sửa Giai Đoạn' : 'Thêm Giai Đoạn'}</DialogTitle>
+              <DialogTitle>
+                {editingPhase ? "Sửa Giai Đoạn" : "Thêm Giai Đoạn"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -1356,7 +1696,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Input
                   id="phaseName"
                   value={newPhase.name || ""}
-                  onChange={(e) => setNewPhase(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setNewPhase((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="Nhập tên giai đoạn"
                   required
                 />
@@ -1366,7 +1708,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Textarea
                   id="phaseDescription"
                   value={newPhase.description || ""}
-                  onChange={(e) => setNewPhase(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setNewPhase((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   placeholder="Mô tả chi tiết về giai đoạn"
                   rows={3}
                 />
@@ -1378,7 +1725,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   type="number"
                   min="1"
                   value={newPhase.order || 1}
-                  onChange={(e) => setNewPhase(prev => ({ ...prev, order: parseInt(e.target.value) }))}
+                  onChange={(e) =>
+                    setNewPhase((prev) => ({
+                      ...prev,
+                      order: parseInt(e.target.value),
+                    }))
+                  }
                 />
               </div>
 
@@ -1387,7 +1739,12 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Input
                   id="phaseLegalBasis"
                   value={newPhase.legalBasis || ""}
-                  onChange={(e) => setNewPhase(prev => ({ ...prev, legalBasis: e.target.value }))}
+                  onChange={(e) =>
+                    setNewPhase((prev) => ({
+                      ...prev,
+                      legalBasis: e.target.value,
+                    }))
+                  }
                   placeholder="Nhập cơ sở pháp lý (nếu có)"
                 />
               </div>
@@ -1397,8 +1754,8 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setIsPhaseDialogOpen(false)
-                  resetPhaseForm()
+                  setIsPhaseDialogOpen(false);
+                  resetPhaseForm();
                 }}
               >
                 Hủy
@@ -1408,7 +1765,7 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 onClick={handlePhaseSubmit}
                 disabled={!newPhase.name}
               >
-                {editingPhase ? 'Cập Nhật' : 'Thêm Giai Đoạn'}
+                {editingPhase ? "Cập Nhật" : "Thêm Giai Đoạn"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1456,7 +1813,6 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
               <CardTitle>Giai Đoạn Dự Án</CardTitle>
             </CardHeader>
 
-
             <CardContent>
               {selectedTemplate && (
                 <div className="mb-4">
@@ -1464,9 +1820,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      setEditingPhase(null)
-                      setIsPhaseDialogOpen(true)
-                      resetPhaseForm()
+                      setEditingPhase(null);
+                      setIsPhaseDialogOpen(true);
+                      resetPhaseForm();
                     }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -1474,18 +1830,25 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   </Button>
                 </div>
               )}
-              {formData.phases && formData.phases.length > 0 ? (
+              {/* {formData.phases && formData.phases.length > 0 ? (
                 <div className="space-y-4">
                   {formData.phases.map((phase) => (
-                    <Card key={phase.id} className="border-l-4 border-l-primary">
+                    <Card
+                      key={phase.id}
+                      className="border-l-4 border-l-primary"
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline">Giai đoạn {phase.order}</Badge>
+                              <Badge variant="outline">
+                                Giai đoạn {phase.order}
+                              </Badge>
                               <h4 className="font-semibold">{phase.name}</h4>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">{phase.description}</p>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {phase.description}
+                            </p>
                             {phase.legalBasis && (
                               <p className="text-xs text-blue-600">
                                 Cơ sở pháp lý: {phase.legalBasis}
@@ -1493,99 +1856,135 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                             )}
 
                             <div className="space-y-1 mt-3">
-                              <Label className="text-sm font-medium">Tài liệu đính kèm</Label>
+                              <Label className="text-sm font-medium">
+                                Tài liệu đính kèm
+                              </Label>
                               <Input
                                 type="file"
                                 multiple
                                 accept=".pdf,.doc,.docx,.xls,.xlsx"
                                 onChange={async (e) => {
-                                  const files = Array.from(e.target.files || [])
+                                  const files = Array.from(
+                                    e.target.files || []
+                                  );
 
-                                  const newDocs = await Promise.all(files.map(async (file) => {
-                                    const attachmentFile = await pocketbaseService.uploadFile(file, file.name);
-                                    return {
-                                      id: attachmentFile.id,
-                                      name: file.name,
-                                      uploadedAt: new Date().toISOString(),
-                                      uploadedBy: 'Bạn',
-                                      type: 'other',
-                                      url: pocketbaseService.getFileUrl(attachmentFile),
-                                    }
-                                  }));
+                                  const newDocs = await Promise.all(
+                                    files.map(async (file) => {
+                                      const attachmentFile =
+                                        await pocketbaseService.uploadFile(
+                                          file,
+                                          file.name
+                                        );
+                                      return {
+                                        id: attachmentFile.id,
+                                        name: file.name,
+                                        uploadedAt: new Date().toISOString(),
+                                        uploadedBy: "Bạn",
+                                        type: "other",
+                                        url: pocketbaseService.getFileUrl(
+                                          attachmentFile
+                                        ),
+                                      };
+                                    })
+                                  );
 
-                                  const updatedPhases = formData.phases?.map((p) =>
-                                    p.id === phase.id
-                                      ? {
-                                        ...p,
-                                        documentProjectPhase: [
-                                          ...(p.documentProjectPhase || []),
-                                          ...newDocs,
-                                        ],
-                                      } as ProjectPhase
-                                      : p
-                                  )
+                                  const updatedPhases = formData.phases?.map(
+                                    (p) =>
+                                      p.id === phase.id
+                                        ? ({
+                                            ...p,
+                                            documentProjectPhase: [
+                                              ...(p.documentProjectPhase || []),
+                                              ...newDocs,
+                                            ],
+                                          } as ProjectPhase)
+                                        : p
+                                  );
 
                                   setFormData((prev) => ({
                                     ...prev,
                                     phases: updatedPhases,
-                                  }))
+                                  }));
                                 }}
                               />
                             </div>
-                            {phase.documentProjectPhase && phase.documentProjectPhase.length > 0 && (
-                              <div className="flex flex-wrap gap-2 pt-2">
-                                {phase.documentProjectPhase.map((doc) => {
-                                  const href = getDownloadUrl(doc.url || "#", doc.name)
-                                  return (
-                                    <div key={doc.id} className="inline-flex items-center gap-2">
-                                      <a
-                                        href={href}
-                                        download={doc.name}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm text-blue-700 max-w-[200px]"
-                                        title="Tải về để xem"
+                            {phase.documentProjectPhase &&
+                              phase.documentProjectPhase.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                  {phase.documentProjectPhase.map((doc) => {
+                                    const href = getDownloadUrl(
+                                      doc.url || "#",
+                                      doc.name
+                                    );
+                                    return (
+                                      <div
+                                        key={doc.id}
+                                        className="inline-flex items-center gap-2"
                                       >
-                                        <FileText className="w-4 h-4" />
-                                        <span className="truncate">{doc.name}</span>
-                                      </a>
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setCurrentFile({
-                                            id: doc.id,
-                                            url: doc.url,
-                                            name: doc.name,
-                                            type: doc.name.split('.').pop()?.toLowerCase() || ''
-                                          })
-                                          setIsViewerOpen(true)
-                                        }}
-                                      >
-                                        Xem
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => {
-                                          const updatedPhases = formData.phases?.map((p) =>
-                                            p.id === phase.id
-                                              ? { ...p, documentProjectPhase: p.documentProjectPhase?.filter((d) => d.id !== doc.id) }
-                                              : p
-                                          )
-                                          setFormData((prev) => ({ ...prev, phases: updatedPhases }))
-                                        }}
-                                        aria-label="Xóa"
-                                      >
-                                        <Trash2 className="w-4 h-4 text-red-500" />
-                                      </Button>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )}
+                                        <a
+                                          href={href}
+                                          download={doc.name}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm text-blue-700 max-w-[200px]"
+                                          title="Tải về để xem"
+                                        >
+                                          <FileText className="w-4 h-4" />
+                                          <span className="truncate">
+                                            {doc.name}
+                                          </span>
+                                        </a>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setCurrentFile({
+                                              id: doc.id,
+                                              url: doc.url,
+                                              name: doc.name,
+                                              type:
+                                                doc.name
+                                                  .split(".")
+                                                  .pop()
+                                                  ?.toLowerCase() || "",
+                                            });
+                                            setIsViewerOpen(true);
+                                          }}
+                                        >
+                                          Xem
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            const updatedPhases =
+                                              formData.phases?.map((p) =>
+                                                p.id === phase.id
+                                                  ? {
+                                                      ...p,
+                                                      documentProjectPhase:
+                                                        p.documentProjectPhase?.filter(
+                                                          (d) => d.id !== doc.id
+                                                        ),
+                                                    }
+                                                  : p
+                                              );
+                                            setFormData((prev) => ({
+                                              ...prev,
+                                              phases: updatedPhases,
+                                            }));
+                                          }}
+                                          aria-label="Xóa"
+                                        >
+                                          <Trash2 className="w-4 h-4 text-red-500" />
+                                        </Button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             <div className="mt-3">
                               <div className="flex items-center justify-between">
                                 <button
@@ -1594,7 +1993,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                                   onClick={() => togglePhaseTasks(phase.id)}
                                 >
                                   <span className="w-4 h-4 rounded-full border border-primary flex items-center justify-center text-xs">
-                                    {expandedPhases.includes(phase.id) ? '-' : '+'}
+                                    {expandedPhases.includes(phase.id)
+                                      ? "-"
+                                      : "+"}
                                   </span>
                                   Công việc: {phase.tasks.length} nhiệm vụ
                                 </button>
@@ -1610,18 +2011,33 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                               </div>
                               {expandedPhases.includes(phase.id) && (
                                 <div className="mt-2 ml-6 space-y-2">
-                                  {phase.tasks.map(task => (
-                                    <div key={task.id} className="p-3 rounded-md bg-muted/40 border relative">
+                                  {phase.tasks.map((task) => (
+                                    <div
+                                      key={task.id}
+                                      className="p-3 rounded-md bg-muted/40 border relative"
+                                    >
                                       <div className="flex items-start justify-between">
                                         <div>
                                           <h5 className="font-semibold flex items-center gap-2">
                                             <FileText className="w-4 h-4 text-muted-foreground" />
                                             {task.name}
                                           </h5>
-                                          <p className="text-sm text-muted-foreground">{task.description}</p>
-                                          <p className="text-xs mt-1 text-blue-600">Cơ sở pháp lý: {task.legalBasis}</p>
+                                          <p className="text-sm text-muted-foreground">
+                                            {task.description}
+                                          </p>
+                                          <p className="text-xs mt-1 text-blue-600">
+                                            Cơ sở pháp lý: {task.legalBasis}
+                                          </p>
                                           <p className="text-xs mt-1">
-                                            Trạng thái: {TASK_STATUS_LABELS[task.status]}, Ưu tiên: {TASK_PRIORITY_LABELS[task.priority]}, Tiến độ: {task.progress}%
+                                            Trạng thái:{" "}
+                                            {TASK_STATUS_LABELS[task.status]},
+                                            Ưu tiên:{" "}
+                                            {
+                                              TASK_PRIORITY_LABELS[
+                                                task.priority
+                                              ]
+                                            }
+                                            , Tiến độ: {task.progress}%
                                           </p>
                                         </div>
                                         <div className="flex gap-2 items-start">
@@ -1629,7 +2045,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => handleEditTask(task, phase.id)}
+                                            onClick={() =>
+                                              handleEditTask(task, phase.id)
+                                            }
                                           >
                                             <Pencil className="w-4 h-4" />
                                           </Button>
@@ -1638,15 +2056,27 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => {
-                                              const newTasks = formData.tasks?.filter(t => t.id !== task.id)
-                                              const updatedPhases = formData.phases?.map(p =>
-                                                p.id === phase.id ? { ...p, tasks: p.tasks.filter(t => t.id !== task.id) } : p
-                                              )
-                                              setFormData(prev => ({
+                                              const newTasks =
+                                                formData.tasks?.filter(
+                                                  (t) => t.id !== task.id
+                                                );
+                                              const updatedPhases =
+                                                formData.phases?.map((p) =>
+                                                  p.id === phase.id
+                                                    ? {
+                                                        ...p,
+                                                        tasks: p.tasks.filter(
+                                                          (t) =>
+                                                            t.id !== task.id
+                                                        ),
+                                                      }
+                                                    : p
+                                                );
+                                              setFormData((prev) => ({
                                                 ...prev,
                                                 tasks: newTasks,
-                                                phases: updatedPhases
-                                              }))
+                                                phases: updatedPhases,
+                                              }));
                                             }}
                                           >
                                             <Trash2 className="w-4 h-4" />
@@ -1673,11 +2103,13 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                const updatedPhases = formData.phases?.filter(p => p.id !== phase.id)
-                                setFormData(prev => ({
+                                const updatedPhases = formData.phases?.filter(
+                                  (p) => p.id !== phase.id
+                                );
+                                setFormData((prev) => ({
                                   ...prev,
                                   phases: updatedPhases,
-                                }))
+                                }));
                               }}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1703,7 +2135,138 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                     Chọn Bản Mẫu
                   </Button>
                 </div>
-              )}
+              )} */}
+              <Transfer
+                dataSource={phaseDataSource}
+                targetKeys={targetKeys}
+                onChange={(nextKeys, direction, moveKeys) => {
+                  let newOrderMap = { ...phaseOrderMap };
+
+                  if (direction === "right") {
+                    moveKeys.forEach((k) => {
+                      const key = String(k);
+                      if (!newOrderMap[key]) {
+                        newOrderMap[key] = Object.keys(newOrderMap).length + 1;
+                      }
+                    });
+                  } else if (direction === "left") {
+                    moveKeys.forEach((k) => {
+                      const key = String(k);
+                      delete newOrderMap[key];
+                    });
+                  }
+
+                  setPhaseOrderMap(newOrderMap);
+
+                  // sort theo thứ tự tick
+                  const orderedKeys = [...nextKeys].sort(
+                    (a, b) =>
+                      (newOrderMap[String(a)] || 0) -
+                      (newOrderMap[String(b)] || 0)
+                  );
+
+                  const selectedPhases = orderedKeys.map((key, idx) => {
+                    const item = phaseDataSource.find((i) => i.key === key)!;
+                    const template = projectTemplates.find(
+                      (t) => t.id === item.templateId
+                    );
+                    const phase = template?.phases.find(
+                      (p) => p.id === item.key
+                    );
+
+                    return {
+                      ...phase,
+                      order: idx + 1,
+                      tasks: (phase?.tasks || []).map((task, tIdx) => ({
+                        ...task,
+                        id: task.id || `task-${Date.now()}-${idx}-${tIdx}`,
+                        phaseId: phase?.id,
+                      })),
+                      documentProjectPhase: phase?.documentProjectPhase || [],
+                    };
+                  });
+
+                  setFormData((prev) => ({
+                    ...prev,
+                    phases: selectedPhases,
+                    tasks: selectedPhases.flatMap((p) => p.tasks),
+                  }));
+                }}
+                onSelectChange={(sourceSelectedKeys, targetSelectedKeys) => {
+                  // Cập nhật số thứ tự ngay khi tick ở list trái
+                  setLeftSelectionOrder(() => {
+                    const newMap: Record<string, number> = {};
+                    sourceSelectedKeys.forEach((k, idx) => {
+                      newMap[String(k)] = idx + 1;
+                    });
+                    return newMap;
+                  });
+                }}
+                listStyle={{
+                  width: 700,
+                  height: 500,
+                }}
+                render={(item) => {
+                  const phase = projectTemplates
+                    .find((t) => t.id === item.templateId)
+                    ?.phases.find((p) => p.id === item.key);
+
+                  if (!phase) return item.title;
+
+                  // nếu item chưa có trong targetKeys thì nó đang ở bên trái
+                  const isLeft = !targetKeys.includes(item.key as string);
+                  const order = isLeft ? leftSelectionOrder[item.key] : null;
+
+                  return (
+                    <div className="relative flex flex-col gap-1 p-2 border rounded-md bg-white shadow-sm w-full">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{phase.name}</span>
+                        </div>
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="px-1 py-0 text-xs h-6"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentPhase(phase);
+                            setIsPhaseDetailOpen(true);
+                          }}
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </div>
+
+                      {phase.description && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {phase.description}
+                        </p>
+                      )}
+                      {phase.legalBasis && (
+                        <p className="text-xs text-blue-600 truncate">
+                          {phase.legalBasis}
+                        </p>
+                      )}
+
+                      {/* số thứ tự ở góc phải dưới */}
+                      {order && (
+                        <span className=" w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center shadow absolute bottom-2 right-2">
+                          {order}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }}
+                titles={["Giai đoạn khả dụng", "Giai đoạn đã chọn"]}
+              />
+              {/* Popup chi tiết */}{" "}
+              <ProjectPhaseDetail
+                open={isPhaseDetailOpen}
+                onClose={() => setIsPhaseDetailOpen(false)}
+                phase={currentPhase}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -1719,7 +2282,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                 <Input
                   id="category"
                   value={formData.category || ""}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("category", e.target.value)
+                  }
                   placeholder="Danh mục dự án (VD: construction, infrastructure)"
                 />
               </div>
@@ -1732,7 +2297,9 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
                   min="0"
                   max="100"
                   value={formData.progress || 0}
-                  onChange={(e) => handleInputChange('progress', parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleInputChange("progress", parseInt(e.target.value))
+                  }
                 />
               </div>
             </CardContent>
@@ -1741,38 +2308,33 @@ export function ProjectForm({ project, onSave, onCancel, mode }: ProjectFormProp
       </Tabs>
 
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-        {
-          currentFile && (
-            currentFile.type === 'pdf' ? (
-              <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle>{currentFile?.name}</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4">
-                  <iframe
-                    src={getDownloadUrl(currentFile.url, currentFile.name)}
-                    width="100%"
-                    height="600px"
-                    title={currentFile.name}
-                  />
-                </div>
-              </DialogContent>
-            ) :
-              (
-                <DialogContent className="w-[80vw] h-[80vh] max-w-[80vw] max-h-[80vh] overflow-y-auto p-0 sm:p-0 rounded-xl">
-                  <div className="px-4 sm:px-6 py-4 sm:py-6">
-                    <MyOnlyOffice
-                      fileUrl={currentFile.url}
-                      fileName={currentFile.name}
-                      id={currentFile.id}
-                    />
-                  </div>
-                </DialogContent>
-              )
-          )
-        }
+        {currentFile &&
+          (currentFile.type === "pdf" ? (
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>{currentFile?.name}</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <iframe
+                  src={getDownloadUrl(currentFile.url, currentFile.name)}
+                  width="100%"
+                  height="600px"
+                  title={currentFile.name}
+                />
+              </div>
+            </DialogContent>
+          ) : (
+            <DialogContent className="w-[80vw] h-[80vh] max-w-[80vw] max-h-[80vh] overflow-y-auto p-0 sm:p-0 rounded-xl">
+              <div className="px-4 sm:px-6 py-4 sm:py-6">
+                <MyOnlyOffice
+                  fileUrl={currentFile.url}
+                  fileName={currentFile.name}
+                  id={currentFile.id}
+                />
+              </div>
+            </DialogContent>
+          ))}
       </Dialog>
-
     </form>
-  )
+  );
 }

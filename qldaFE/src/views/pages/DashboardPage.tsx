@@ -111,7 +111,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Chi Tiết Dự Án</h2>
           <Button variant="outline" onClick={handleCloseDialog}>
-            Quay lại
+            Đóng
           </Button>
         </div>
         <ProjectDetail
