@@ -15,7 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @AutoConfigureMockMvc
-@AuthenticationIntegrationTest
 class TokenAuthenticationSecurityMetersIT {
 
     private static final String INVALID_TOKENS_METER_EXPECTED_NAME = "security.authentication.invalid-tokens";

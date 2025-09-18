@@ -6,9 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // nếu có sẵn; nếu không có, giữ div tròn như cũ
 import { useState, useMemo } from "react";
-import { useAuth } from "@/services/auth/AuthContext";
 import { LogOut, User as UserIcon, Mail } from "lucide-react";
-import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+
 
 export function AppLayout() {
   return (
@@ -38,21 +39,21 @@ export function AppLayout() {
 }
 
 function UserMenu() {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [openProfile, setOpenProfile] = useState(false);
 
-  const displayName = user?.displayName || user?.email?.split("@")[0] || "Người dùng";
+  const displayName = user?.fullName || user?.email?.split("@")[0] || "Người dùng";
   const email = user?.email || "";
   const initials = useMemo(() => {
-    const n = (user?.displayName || email || "U").trim();
+    const n = (user?.fullName || email || "U").trim();
     const parts = n.split(/\s+/);
     return (parts[0]?.[0] || "U").toUpperCase() + (parts[1]?.[0] || "").toUpperCase();
   }, [user, email]);
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       toast.success("Đã đăng xuất");
       navigate("/auth", { replace: true });
     } catch (e: any) {

@@ -28,7 +28,7 @@ import {
   toFileExt,
 } from "@/types/project";
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from "@/utils/taskLabels";
-import { Transfer } from "antd";
+
 import {
   CalendarIcon,
   Save,
@@ -43,7 +43,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { Project, ProjectTemplate, ProjectPhase } from "@/types/project";
-import { useProjectTemplates } from "@/hooks/project/useProjectsTemplates";
+import { useProjectPhases } from "@/hooks/project/useProjectPhases";
 import { buildDownloadUrl } from "@/helpers/buildDownloadUrl";
 import {
   CapitalProject,
@@ -66,7 +66,9 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import folderIcon from "@/assets/img/ic_folder.png";
 import pocketbaseService from "@/services/PocketBaseService";
 import MyOnlyOffice from "@/components/ui/myOnlyOffice";
-import { ProjectPhaseDetail } from "../projects/ProjectPhaseDetail";
+import { Transfer } from "antd";
+import { ProjectPhaseDetail } from "@/views/projects/ProjectPhaseDetail";
+import projectPhaseCategoryService from "@/services/projectPhaseCategoryService";
 
 export function ProjectForm({
   project,
@@ -74,7 +76,7 @@ export function ProjectForm({
   onCancel,
   mode,
 }: ProjectFormProps) {
-  const { projectTemplates, loading } = useProjectTemplates();
+  const { projectPhases, loading } = useProjectPhases();
   const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("basic");
   const [selectedTemplate, setSelectedTemplate] =
@@ -90,7 +92,7 @@ export function ProjectForm({
   const [newTask, setNewTask] = useState<Partial<ProjectTask>>({
     name: "",
     description: "",
-    status: "not_started",
+    status: "NOT_STARTED",
     priority: "medium",
     progress: 0,
     legalBasis: "",
@@ -101,7 +103,7 @@ export function ProjectForm({
     name: "",
     description: "",
     order: 1,
-    status: "not_started",
+    status: "NOT_STARTED",
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -112,7 +114,7 @@ export function ProjectForm({
   });
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [currentFile, setCurrentFile] = useState<{
-    id: string;
+    id: string | number;
     url: string;
     name: string;
     type: string;
@@ -122,7 +124,7 @@ export function ProjectForm({
   const [formData, setFormData] = useState<Partial<Project>>({
     name: "",
     description: "",
-    status: "planning",
+    status: "PLANNING",
     progress: 0,
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
@@ -153,8 +155,8 @@ export function ProjectForm({
     syntheticMethod: "",
     notes: "",
     numberTBMT: "",
-    timeExceution: "",
-    contrator: "",
+    timeExecution: "",
+    contractor: "",
     contractorPrice: 0,
     relatedDocuments: [],
     roleExecutor: "",
@@ -170,6 +172,20 @@ export function ProjectForm({
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
 
   const [newFolderName, setNewFolderName] = useState("");
+
+
+  // Các key giai đoạn được chọn (bên phải Transfer)
+  const [targetKeys, setTargetKeys] = useState<string[]>([]);
+
+  // Map lưu thứ tự hiển thị (phaseId -> order)
+  const [phaseOrderMap, setPhaseOrderMap] = useState<Record<string, number>>(
+    {}
+  );
+
+  // Map lưu thứ tự tick tạm thời ở list trái (nếu bạn có dùng)
+  const [leftSelectionOrder, setLeftSelectionOrder] = useState<
+    Record<string, number>
+  >({});
 
   const removeFolderById = (
     folders: DocumentFolder[],
@@ -233,6 +249,12 @@ export function ProjectForm({
     }
   }, [project, mode]);
 
+  const transferData = projectPhases.map((phase) => ({
+    key: String(phase.id),
+    title: phase.name,
+    ...phase,
+  }));
+
   const getDownloadUrl = (fileUrl: string, fileName?: string) =>
     buildDownloadUrl(fileUrl, fileName);
 
@@ -251,45 +273,18 @@ export function ProjectForm({
     );
   };
 
-  // DataSource cho Transfer sẽ dựa vào tất cả giai đoạn có sẵn (ở template)
-  const phaseDataSource = projectTemplates.flatMap((t) =>
-    t.phases.map((phase, idx) => ({
-      key: phase.id || `${t.id}-phase-${idx}`,
-      title: phase.name,
-      description: phase.description,
-      templateId: t.id, // ✅ thêm trường này
-    }))
-  );
-  const [orderMap, setOrderMap] = useState<Record<string, number>>({});
-  const [phaseOrderMap, setPhaseOrderMap] = useState<Record<string, number>>(
-    {}
-  );
-  const targetKeys = (formData.phases || []).map((p) => p.id);
-  const [isPhaseDetailOpen, setIsPhaseDetailOpen] = useState(false);
-  const [currentPhase, setCurrentPhase] = useState<ProjectPhase | null>(null);
-  const [leftSelectionOrder, setLeftSelectionOrder] = useState<
-    Record<string, number>
-  >({});
-
   const handleTemplateSelect = (template: ProjectTemplate) => {
     setSelectedTemplate(template);
-
-    const now = Date.now(); // ✅ chỉ gọi 1 lần
-    const phases = template.phases.map((phase, index) => {
-      const phaseId = `phase-${now}-${index}`;
-      return {
-        ...phase,
-        id: phaseId,
-        tasks: phase.tasks.map((task, taskIndex) => ({
-          ...task,
-          id: `task-${now}-${index}-${taskIndex}`,
-          phaseId,
-        })),
-      };
-    });
-
+    const phases = template.phases.map((phase, index) => ({
+      ...phase,
+      id: `phase-${Date.now()}-${index}`,
+      tasks: phase.tasks.map((task, taskIndex) => ({
+        ...task,
+        id: `task-${Date.now()}-${index}-${taskIndex}`,
+        phaseId: `phase-${Date.now()}-${index}`,
+      })),
+    }));
     const tasks = phases.flatMap((phase) => phase.tasks);
-
     setFormData((prev) => ({
       ...prev,
       name: prev.name || template.name,
@@ -297,7 +292,6 @@ export function ProjectForm({
       phases,
       tasks,
     }));
-
     setActiveTab("phases");
   };
 
@@ -306,7 +300,7 @@ export function ProjectForm({
       id: editingTask ? editingTask.id : `task-${Date.now()}-${Math.random()}`,
       name: newTask.name || "",
       description: newTask.description || "",
-      status: newTask.status || "not_started",
+      status: newTask.status || "NOT_STARTED",
       priority: newTask.priority || "medium",
       progress: newTask.progress || 0,
       legalBasis: newTask.legalBasis || "",
@@ -346,7 +340,7 @@ export function ProjectForm({
     setNewTask({
       name: "",
       description: "",
-      status: "not_started",
+      status: "NOT_STARTED",
       priority: "medium",
       progress: 0,
       legalBasis: "",
@@ -364,7 +358,7 @@ export function ProjectForm({
       name: newPhase.name || "",
       description: newPhase.description || "",
       order: newPhase.order || 1,
-      status: newPhase.status || "not_started",
+      status: newPhase.status || "NOT_STARTED",
       startDate: newPhase.startDate,
       endDate: newPhase.endDate,
       legalBasis: newPhase.legalBasis || "",
@@ -390,7 +384,7 @@ export function ProjectForm({
       name: "",
       description: "",
       order: (formData.phases?.length || 0) + 1,
-      status: "not_started",
+      status: "NOT_STARTED",
       startDate: new Date().toISOString().split("T")[0],
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         .toISOString()
@@ -408,7 +402,7 @@ export function ProjectForm({
     setNewTask({
       name: "",
       description: "",
-      status: "not_started",
+      status: "NOT_STARTED",
       priority: "medium",
       progress: 0,
       legalBasis: "",
@@ -457,6 +451,8 @@ export function ProjectForm({
         mode === "create" ? new Date().toISOString() : project?.createdAt,
       updatedAt: new Date().toISOString(),
     } as Project;
+
+    console.log("Submitting project data:", projectData);
     onSave(projectData);
   };
 
@@ -678,6 +674,74 @@ export function ProjectForm({
     });
   };
 
+  const handlePhaseChange = (nextKeys, direction, moveKeys) => {
+    console.log("Phase change:", { nextKeys, direction, moveKeys });
+    setTargetKeys(nextKeys.map(String));
+    const newOrderMap = { ...phaseOrderMap };
+
+    if (direction === "right") {
+      moveKeys.forEach((k) => {
+        const key = String(k);
+        if (!newOrderMap[key]) {
+          newOrderMap[key] = Object.keys(newOrderMap).length + 1;
+        }
+      });
+    } else if (direction === "left") {
+      moveKeys.forEach((k) => {
+        const key = String(k);
+        delete newOrderMap[key];
+      });
+    }
+
+    setPhaseOrderMap(newOrderMap);
+
+    const orderedKeys = [...nextKeys].sort(
+      (a, b) =>
+        (newOrderMap[String(a)] || 0) -
+        (newOrderMap[String(b)] || 0)
+    );
+
+    const selectedPhases = orderedKeys.map((key, idx) => {
+      console.log("Mapping phase key:", key);
+      const item = projectPhases.find((i) => i.id === key)!;
+      const template = projectPhases.find(
+        (t) => t.id === item.id
+      );
+      const phase = projectPhases?.find(
+        (p) => p.id === item.id
+      );
+
+      return {
+        ...phase,
+        order: idx + 1,
+        status: "NOT_STARTED" as const,
+        tasks: (phase?.tasks || []).map((task, tIdx) => ({
+          id: task.id || `task-${Date.now()}-${idx}-${tIdx}`,
+          phaseId: phase?.id || "",
+          name: task.name,
+          description: task.description || "",
+          status: task.status || "NOT_STARTED",
+          priority: task.priority || "medium",
+          progress: task.progress || 0,
+          legalBasis: task.legalBasis || "",
+          documentsTask: task.documentsTask || [],
+          assignUser: task.assignUser || "",
+          assignee: task.assignee || "",
+          startDate: task.startDate || null,
+          endDate: task.endDate || null,
+          dependencies: task.dependencies || [],
+        })),
+        documentProjectPhase: phase?.documentProjectPhase || [],
+      } as ProjectPhase;
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      phases: selectedPhases,
+      tasks: selectedPhases.flatMap((p) => p.tasks),
+    }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -704,17 +768,13 @@ export function ProjectForm({
           </Button>
         </div>
       </div>
-
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="space-y-4"
       >
         <TabsList className=" flex w-full flex-nowrap overflow-x-auto gap-2 p-1 sm:grid sm:grid-cols-4 sm:gap-0 sm:p-1">
-          {" "}
-          {/* <TabsTrigger className="shrink-0" value="template">
-            Bản Mẫu
-          </TabsTrigger> */}
+          {/* <TabsTrigger className="shrink-0" value="template">Bản Mẫu</TabsTrigger> */}
           <TabsTrigger className="shrink-0" value="basic">
             Thông Tin Cơ Bản
           </TabsTrigger>
@@ -742,34 +802,25 @@ export function ProjectForm({
                 {loading ? (
                   <p>Đang tải Bản Mẫu...</p>
                 ) : (
-                  projectTemplates.map((template) => (
-                    <Card
-                      key={template.id}
-                      className={`cursor-pointer transition-colors hover:bg-muted/50 ${
-                        selectedTemplate?.id === template.id
-                          ? "ring-2 ring-primary"
-                          : ""
-                      }`}
-                      onClick={() => handleTemplateSelect(template)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-1">
-                              {template.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {template.description}
-                            </p>
-                            <Badge variant="outline">
-                              {template.phases.length} giai đoạn
-                            </Badge>
-                          </div>
-                          <Building className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                  <div></div>
+                  // projectTemplates.map((template) => (
+                  //   <Card
+                  //     key={template.id}
+                  //     className={`cursor-pointer transition-colors hover:bg-muted/50 ${selectedTemplate?.id === template.id ? "ring-2 ring-primary" : ""}`}
+                  //     onClick={() => handleTemplateSelect(template)}
+                  //   >
+                  //     <CardContent className="p-4">
+                  //       <div className="flex items-start justify-between">
+                  //         <div className="flex-1">
+                  //           <h3 className="font-semibold mb-1">{template.name}</h3>
+                  //           <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
+                  //           <Badge variant="outline">{template.phases.length} giai đoạn</Badge>
+                  //         </div>
+                  //         <Building className="w-8 h-8 text-muted-foreground" />
+                  //       </div>
+                  //     </CardContent>
+                  //   </Card>
+                  // ))
                 )}
               </div>
 
@@ -890,11 +941,11 @@ export function ProjectForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="planning">Lập Kế Hoạch</SelectItem>
-                      <SelectItem value="active">Đang Hoạt Động</SelectItem>
-                      <SelectItem value="on_hold">Tạm Dừng</SelectItem>
-                      <SelectItem value="completed">Hoàn Thành</SelectItem>
-                      <SelectItem value="cancelled">Đã Hủy</SelectItem>
+                      <SelectItem value="PLANNING">Lập Kế Hoạch</SelectItem>
+                      <SelectItem value="ACTIVE">Đang Hoạt Động</SelectItem>
+                      <SelectItem value="ON_HOLD">Tạm Dừng</SelectItem>
+                      <SelectItem value="COMPLETED">Hoàn Thành</SelectItem>
+                      <SelectItem value="CANCELLED">Đã Hủy</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1115,9 +1166,9 @@ export function ProjectForm({
                     <div className="space-y-2">
                       <Label>Thời Gian Thực Hiện</Label>
                       <Input
-                        value={formData.timeExceution || ""}
+                        value={formData.timeExecution || ""}
                         onChange={(e) =>
-                          handleInputChange("timeExceution", e.target.value)
+                          handleInputChange("timeExecution", e.target.value)
                         }
                       />
                     </div>
@@ -1185,14 +1236,31 @@ export function ProjectForm({
                       {formData.relatedDocuments &&
                         formData.relatedDocuments.length > 0 && (
                           <div className="flex flex-wrap gap-2 pt-2">
-                            {formData.relatedDocuments.map((doc) => {
-                              const href = getDownloadUrl(
-                                doc.url || "#",
-                                doc.name
-                              );
+                            {formData.relatedDocuments.map((doc, index) => {
+                              let fileUrl: string;
+                              let fileName: string;
+                              let docId: string | undefined;
+
+                              // SỬ DỤNG IF/ELSE ĐỂ TYPE GUARD HOẠT ĐỘNG CHÍNH XÁC
+                              if ("url" in doc) {
+                                // Trong khối này, TypeScript biết chắc chắn `doc` là một `RelatedDocument`
+                                fileUrl = doc.url;
+                                fileName = doc.name;
+                                docId = doc.id;
+                              } else {
+                                // Trong khối này, TypeScript biết chắc chắn `doc` là một `File`
+                                fileUrl = URL.createObjectURL(doc);
+                                fileName = doc.name;
+                                // Đối tượng File không có id, tạo một key tạm thời để render
+                                docId = `${doc.name}-${index}`;
+                              }
+
+                              const key = docId || index;
+                              const href = getDownloadUrl(fileUrl, fileName);
+
                               return (
                                 <div
-                                  key={doc.id}
+                                  key={key}
                                   className="inline-flex items-center gap-2"
                                 >
                                   <a
@@ -1212,8 +1280,8 @@ export function ProjectForm({
                                     size="sm"
                                     onClick={() => {
                                       setCurrentFile({
-                                        id: doc.id,
-                                        url: doc.url,
+                                        id: key,
+                                        url: fileUrl,
                                         name: doc.name,
                                         type:
                                           doc.name
@@ -1234,9 +1302,13 @@ export function ProjectForm({
                                       setFormData((prev) => ({
                                         ...prev,
                                         relatedDocuments:
-                                          prev.relatedDocuments?.filter(
-                                            (d) => d.id !== doc.id
-                                          ),
+                                          prev.relatedDocuments?.filter((d) => {
+                                            if ("id" in d) {
+                                              return d.id !== docId;
+                                            }
+                                            // So sánh đối tượng File trực tiếp
+                                            return d !== doc;
+                                          }),
                                       }));
                                     }}
                                     aria-label="Xóa"
@@ -1256,18 +1328,18 @@ export function ProjectForm({
                       <Label>Nhà Thầu</Label>
                       <select
                         className="border rounded p-2 w-full"
-                        value={formData.contrator || ""}
+                        value={formData.contractor || ""}
                         onChange={(e) => {
                           const v = e.target.value;
-                          handleInputChange("contrator", v);
+                          handleInputChange("contractor", v);
                           setFormData((prev) => ({
                             ...prev,
                             contractorCompanyName:
                               v === "Độc lập"
                                 ? [prev.contractorCompanyName?.[0] || ""]
                                 : Array.isArray(prev.contractorCompanyName)
-                                ? prev.contractorCompanyName.filter(Boolean)
-                                : [],
+                                  ? prev.contractorCompanyName.filter(Boolean)
+                                  : [],
                           }));
                         }}
                       >
@@ -1277,7 +1349,7 @@ export function ProjectForm({
                       </select>
                     </div>
 
-                    {formData.contrator === "Liên danh" ? (
+                    {formData.contractor === "Liên danh" ? (
                       <div className="space-y-2">
                         <Label>Các Công Ty Liên Danh</Label>
                         <div className="flex gap-2">
@@ -1374,10 +1446,10 @@ export function ProjectForm({
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {formData.startDate
                             ? format(
-                                new Date(formData.startDate),
-                                "dd/MM/yyyy",
-                                { locale: vi }
-                              )
+                              new Date(formData.startDate),
+                              "dd/MM/yyyy",
+                              { locale: vi }
+                            )
                             : "Chọn ngày"}
                         </Button>
                       </PopoverTrigger>
@@ -1412,8 +1484,8 @@ export function ProjectForm({
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {formData.endDate
                             ? format(new Date(formData.endDate), "dd/MM/yyyy", {
-                                locale: vi,
-                              })
+                              locale: vi,
+                            })
                             : "Chọn ngày"}
                         </Button>
                       </PopoverTrigger>
@@ -1578,10 +1650,10 @@ export function ProjectForm({
                       setNewTask((prev) => ({
                         ...prev,
                         status: value as
-                          | "not_started"
-                          | "in_progress"
-                          | "completed"
-                          | "blocked",
+                          | "NOT_STARTED"
+                          | "IN_PROGRESS"
+                          | "COMPLETED"
+                          | "BLOCKED",
                       }))
                     }
                   >
@@ -1830,442 +1902,94 @@ export function ProjectForm({
                   </Button>
                 </div>
               )}
-              {/* {formData.phases && formData.phases.length > 0 ? (
-                <div className="space-y-4">
-                  {formData.phases.map((phase) => (
-                    <Card
-                      key={phase.id}
-                      className="border-l-4 border-l-primary"
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline">
-                                Giai đoạn {phase.order}
-                              </Badge>
-                              <h4 className="font-semibold">{phase.name}</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {phase.description}
-                            </p>
-                            {phase.legalBasis && (
-                              <p className="text-xs text-blue-600">
-                                Cơ sở pháp lý: {phase.legalBasis}
-                              </p>
-                            )}
+              {/*
+        Sử dụng một div bọc ngoài để dễ dàng tùy chỉnh layout responsive.
+        Trên màn hình nhỏ (mobile), chúng ta sẽ cho các list của Transfer xếp chồng lên nhau (flex-col).
+        Trên màn hình lớn hơn (từ md trở lên), chúng ta sẽ cho chúng nằm cạnh nhau (md:flex-row).
+      */}
+              <div className="antd-transfer-responsive-wrapper">
+                <Transfer
+                  dataSource={transferData}
+                  targetKeys={targetKeys}
+                  onChange={handlePhaseChange}
+                  onSelectChange={(sourceSelectedKeys, targetSelectedKeys) => {
+                    // Cập nhật số thứ tự ngay khi tick ở list trái
+                    setLeftSelectionOrder(() => {
+                      const newMap: Record<string, number> = {};
+                      sourceSelectedKeys.forEach((k, idx) => {
+                        newMap[String(k)] = idx + 1;
+                      });
+                      return newMap;
+                    });
+                  }}
+                  listStyle={(direction) => ({
+                    width: '100%',
+                    height: '400px',
 
-                            <div className="space-y-1 mt-3">
-                              <Label className="text-sm font-medium">
-                                Tài liệu đính kèm
-                              </Label>
-                              <Input
-                                type="file"
-                                multiple
-                                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                                onChange={async (e) => {
-                                  const files = Array.from(
-                                    e.target.files || []
-                                  );
+                    '@media (min-width: 768px)': {
+                      width: '300px',
+                      height: '500px',
+                    },
+                  })}
+                  render={(item) => {
+                    const phase = projectPhases.find((t) => t.id === item.id);
+                    if (!phase) return item.name;
 
-                                  const newDocs = await Promise.all(
-                                    files.map(async (file) => {
-                                      const attachmentFile =
-                                        await pocketbaseService.uploadFile(
-                                          file,
-                                          file.name
-                                        );
-                                      return {
-                                        id: attachmentFile.id,
-                                        name: file.name,
-                                        uploadedAt: new Date().toISOString(),
-                                        uploadedBy: "Bạn",
-                                        type: "other",
-                                        url: pocketbaseService.getFileUrl(
-                                          attachmentFile
-                                        ),
-                                      };
-                                    })
-                                  );
+                    const isLeft = !targetKeys.includes(item.id as string);
+                    const order = isLeft ? leftSelectionOrder[item.id] : null;
 
-                                  const updatedPhases = formData.phases?.map(
-                                    (p) =>
-                                      p.id === phase.id
-                                        ? ({
-                                            ...p,
-                                            documentProjectPhase: [
-                                              ...(p.documentProjectPhase || []),
-                                              ...newDocs,
-                                            ],
-                                          } as ProjectPhase)
-                                        : p
-                                  );
-
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    phases: updatedPhases,
-                                  }));
-                                }}
-                              />
-                            </div>
-                            {phase.documentProjectPhase &&
-                              phase.documentProjectPhase.length > 0 && (
-                                <div className="flex flex-wrap gap-2 pt-2">
-                                  {phase.documentProjectPhase.map((doc) => {
-                                    const href = getDownloadUrl(
-                                      doc.url || "#",
-                                      doc.name
-                                    );
-                                    return (
-                                      <div
-                                        key={doc.id}
-                                        className="inline-flex items-center gap-2"
-                                      >
-                                        <a
-                                          href={href}
-                                          download={doc.name}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm text-blue-700 max-w-[200px]"
-                                          title="Tải về để xem"
-                                        >
-                                          <FileText className="w-4 h-4" />
-                                          <span className="truncate">
-                                            {doc.name}
-                                          </span>
-                                        </a>
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => {
-                                            setCurrentFile({
-                                              id: doc.id,
-                                              url: doc.url,
-                                              name: doc.name,
-                                              type:
-                                                doc.name
-                                                  .split(".")
-                                                  .pop()
-                                                  ?.toLowerCase() || "",
-                                            });
-                                            setIsViewerOpen(true);
-                                          }}
-                                        >
-                                          Xem
-                                        </Button>
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => {
-                                            const updatedPhases =
-                                              formData.phases?.map((p) =>
-                                                p.id === phase.id
-                                                  ? {
-                                                      ...p,
-                                                      documentProjectPhase:
-                                                        p.documentProjectPhase?.filter(
-                                                          (d) => d.id !== doc.id
-                                                        ),
-                                                    }
-                                                  : p
-                                              );
-                                            setFormData((prev) => ({
-                                              ...prev,
-                                              phases: updatedPhases,
-                                            }));
-                                          }}
-                                          aria-label="Xóa"
-                                        >
-                                          <Trash2 className="w-4 h-4 text-red-500" />
-                                        </Button>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            <div className="mt-3">
-                              <div className="flex items-center justify-between">
-                                <button
-                                  type="button"
-                                  className="text-sm font-medium flex items-center gap-1 text-primary"
-                                  onClick={() => togglePhaseTasks(phase.id)}
-                                >
-                                  <span className="w-4 h-4 rounded-full border border-primary flex items-center justify-center text-xs">
-                                    {expandedPhases.includes(phase.id)
-                                      ? "-"
-                                      : "+"}
-                                  </span>
-                                  Công việc: {phase.tasks.length} nhiệm vụ
-                                </button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleAddTask(phase.id)}
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Thêm Công Việc
-                                </Button>
-                              </div>
-                              {expandedPhases.includes(phase.id) && (
-                                <div className="mt-2 ml-6 space-y-2">
-                                  {phase.tasks.map((task) => (
-                                    <div
-                                      key={task.id}
-                                      className="p-3 rounded-md bg-muted/40 border relative"
-                                    >
-                                      <div className="flex items-start justify-between">
-                                        <div>
-                                          <h5 className="font-semibold flex items-center gap-2">
-                                            <FileText className="w-4 h-4 text-muted-foreground" />
-                                            {task.name}
-                                          </h5>
-                                          <p className="text-sm text-muted-foreground">
-                                            {task.description}
-                                          </p>
-                                          <p className="text-xs mt-1 text-blue-600">
-                                            Cơ sở pháp lý: {task.legalBasis}
-                                          </p>
-                                          <p className="text-xs mt-1">
-                                            Trạng thái:{" "}
-                                            {TASK_STATUS_LABELS[task.status]},
-                                            Ưu tiên:{" "}
-                                            {
-                                              TASK_PRIORITY_LABELS[
-                                                task.priority
-                                              ]
-                                            }
-                                            , Tiến độ: {task.progress}%
-                                          </p>
-                                        </div>
-                                        <div className="flex gap-2 items-start">
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                              handleEditTask(task, phase.id)
-                                            }
-                                          >
-                                            <Pencil className="w-4 h-4" />
-                                          </Button>
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                              const newTasks =
-                                                formData.tasks?.filter(
-                                                  (t) => t.id !== task.id
-                                                );
-                                              const updatedPhases =
-                                                formData.phases?.map((p) =>
-                                                  p.id === phase.id
-                                                    ? {
-                                                        ...p,
-                                                        tasks: p.tasks.filter(
-                                                          (t) =>
-                                                            t.id !== task.id
-                                                        ),
-                                                      }
-                                                    : p
-                                                );
-                                              setFormData((prev) => ({
-                                                ...prev,
-                                                tasks: newTasks,
-                                                phases: updatedPhases,
-                                              }));
-                                            }}
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                    return (
+                      // Sử dụng Flexbox để layout các item bên trong tốt hơn
+                      <div className="relative flex flex-col gap-1 p-2 border rounded-md bg-white shadow-sm w-full">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm sm:text-base">{phase.name}</span>
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditPhase(phase)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                const updatedPhases = formData.phases?.filter(
-                                  (p) => p.id !== phase.id
-                                );
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  phases: updatedPhases,
-                                }));
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Chưa có giai đoạn nào được thiết lập
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab("template")}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Chọn Bản Mẫu
-                  </Button>
-                </div>
-              )} */}
-              <Transfer
-                dataSource={phaseDataSource}
-                targetKeys={targetKeys}
-                onChange={(nextKeys, direction, moveKeys) => {
-                  let newOrderMap = { ...phaseOrderMap };
-
-                  if (direction === "right") {
-                    moveKeys.forEach((k) => {
-                      const key = String(k);
-                      if (!newOrderMap[key]) {
-                        newOrderMap[key] = Object.keys(newOrderMap).length + 1;
-                      }
-                    });
-                  } else if (direction === "left") {
-                    moveKeys.forEach((k) => {
-                      const key = String(k);
-                      delete newOrderMap[key];
-                    });
-                  }
-
-                  setPhaseOrderMap(newOrderMap);
-
-                  // sort theo thứ tự tick
-                  const orderedKeys = [...nextKeys].sort(
-                    (a, b) =>
-                      (newOrderMap[String(a)] || 0) -
-                      (newOrderMap[String(b)] || 0)
-                  );
-
-                  const selectedPhases = orderedKeys.map((key, idx) => {
-                    const item = phaseDataSource.find((i) => i.key === key)!;
-                    const template = projectTemplates.find(
-                      (t) => t.id === item.templateId
-                    );
-                    const phase = template?.phases.find(
-                      (p) => p.id === item.key
-                    );
-
-                    return {
-                      ...phase,
-                      order: idx + 1,
-                      tasks: (phase?.tasks || []).map((task, tIdx) => ({
-                        ...task,
-                        id: task.id || `task-${Date.now()}-${idx}-${tIdx}`,
-                        phaseId: phase?.id,
-                      })),
-                      documentProjectPhase: phase?.documentProjectPhase || [],
-                    };
-                  });
-
-                  setFormData((prev) => ({
-                    ...prev,
-                    phases: selectedPhases,
-                    tasks: selectedPhases.flatMap((p) => p.tasks),
-                  }));
-                }}
-                onSelectChange={(sourceSelectedKeys, targetSelectedKeys) => {
-                  // Cập nhật số thứ tự ngay khi tick ở list trái
-                  setLeftSelectionOrder(() => {
-                    const newMap: Record<string, number> = {};
-                    sourceSelectedKeys.forEach((k, idx) => {
-                      newMap[String(k)] = idx + 1;
-                    });
-                    return newMap;
-                  });
-                }}
-                listStyle={{
-                  width: 700,
-                  height: 500,
-                }}
-                render={(item) => {
-                  const phase = projectTemplates
-                    .find((t) => t.id === item.templateId)
-                    ?.phases.find((p) => p.id === item.key);
-
-                  if (!phase) return item.title;
-
-                  // nếu item chưa có trong targetKeys thì nó đang ở bên trái
-                  const isLeft = !targetKeys.includes(item.key as string);
-                  const order = isLeft ? leftSelectionOrder[item.key] : null;
-
-                  return (
-                    <div className="relative flex flex-col gap-1 p-2 border rounded-md bg-white shadow-sm w-full">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{phase.name}</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="px-1 py-0 text-xs h-6 self-start sm:self-center"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentPhaseId(phase.id);
+                              setIsPhaseDialogOpen(true);
+                            }}
+                          >
+                            Xem chi tiết
+                          </Button>
                         </div>
 
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="px-1 py-0 text-xs h-6"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCurrentPhase(phase);
-                            setIsPhaseDetailOpen(true);
-                          }}
-                        >
-                          Xem chi tiết
-                        </Button>
+                        {phase.description && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {phase.description}
+                          </p>
+                        )}
+                        {phase.legalBasis && (
+                          <p className="text-xs text-blue-600 truncate">
+                            {phase.legalBasis}
+                          </p>
+                        )}
+
+                        {order && (
+                          <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center shadow absolute bottom-2 right-2">
+                            {order}
+                          </span>
+                        )}
                       </div>
-
-                      {phase.description && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {phase.description}
-                        </p>
-                      )}
-                      {phase.legalBasis && (
-                        <p className="text-xs text-blue-600 truncate">
-                          {phase.legalBasis}
-                        </p>
-                      )}
-
-                      {/* số thứ tự ở góc phải dưới */}
-                      {order && (
-                        <span className=" w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center shadow absolute bottom-2 right-2">
-                          {order}
-                        </span>
-                      )}
-                    </div>
-                  );
-                }}
-                titles={["Giai đoạn khả dụng", "Giai đoạn đã chọn"]}
-              />
-              {/* Popup chi tiết */}{" "}
+                    );
+                  }}
+                  titles={["Giai đoạn khả dụng", "Giai đoạn đã chọn"]}
+                  // Chuyển layout của Transfer sang chiều dọc trên màn hình nhỏ
+                  className="flex-col md:flex-row"
+                />
+              </div>
               <ProjectPhaseDetail
-                open={isPhaseDetailOpen}
-                onClose={() => setIsPhaseDetailOpen(false)}
-                phase={currentPhase}
+                open={isPhaseDialogOpen}
+                onClose={() => setIsPhaseDialogOpen(false)}
+                phase={
+                  formData.phases?.find((p) => p.id === currentPhaseId) || null
+                }
               />
             </CardContent>
           </Card>
@@ -2329,7 +2053,7 @@ export function ProjectForm({
                 <MyOnlyOffice
                   fileUrl={currentFile.url}
                   fileName={currentFile.name}
-                  id={currentFile.id}
+                  id={String(currentFile.id)}
                 />
               </div>
             </DialogContent>

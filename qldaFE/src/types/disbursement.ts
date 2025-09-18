@@ -37,4 +37,3 @@ export type BaseDisbursementPlan = {
 export type DisbursementPlan = BaseDisbursementPlan & {};
 
 export type DisbursementPlanOnlyProject = BaseDisbursementPlan & {};
-

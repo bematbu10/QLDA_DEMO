@@ -40,7 +40,7 @@ import { ProjectDetail } from "@/views/projects/ProjectDetail"
 import { ProjectForm } from "@/views/projects/ProjectForm"
 import { useProjects } from "@/hooks/useProjects"
 
-import { addProject, updateProject, deleteProject } from "@/services/ProjectService"
+// import { addProject, updateProject, deleteProject } from "@/services/ProjectService"
 
 const statusConfig = {
   planning: { label: "Lập Kế Hoạch", className: "bg-status-planning text-white", icon: CalendarDays },
@@ -158,16 +158,16 @@ export default function Projects() {
   //  Xoá qua service + refetch
   const handleDeleteProject = async (project: Project) => {
     if (!confirm(`Bạn có chắc chắn muốn xóa dự án "${project.name}"?`)) return
-    await deleteProject(project.id)
+    // await deleteProject(project.id)
     await refetch()
   }
 
   // Lưu dự án theo mode (create/edit/copy) + refetch
   const handleSaveProject = async (projectData: Omit<Project, "id"> | Project) => {
     if (dialogMode === "create" || dialogMode === "copy") {
-      await addProject(projectData as Omit<Project, "id">)
+      // await addProject(projectData as Omit<Project, "id">)
     } else if (dialogMode === "edit" && "id" in projectData) {
-      await updateProject(projectData.id, projectData as Project)
+      // await updateProject(projectData.id, projectData as Project)
     }
     await refetch()
     setDialogMode(null)

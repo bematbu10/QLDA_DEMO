@@ -60,7 +60,7 @@ public class ExceptionTranslatorTestController {
         }
     }
 
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "test response status")
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "test response taskStatus")
     @SuppressWarnings("serial")
     public static class TestResponseStatusException extends RuntimeException {}
 }

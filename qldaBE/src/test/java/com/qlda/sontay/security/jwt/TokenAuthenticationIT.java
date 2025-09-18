@@ -12,7 +12,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @AutoConfigureMockMvc
-@AuthenticationIntegrationTest
 class TokenAuthenticationIT {
 
     @Autowired

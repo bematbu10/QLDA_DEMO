@@ -1,5 +1,5 @@
+import projectService from "@/services/ProjectService"
 import { useEffect, useState } from "react"
-import { getAllProjects } from "@/services/ProjectService"
 
 export const useProjects = () => {
   const [projects, setProjects] = useState([])
@@ -7,7 +7,7 @@ export const useProjects = () => {
 
   const fetchProjects = async () => {
     setLoading(true)
-    const data = await getAllProjects()
+    const data = await projectService.getAll()
     setProjects(data)
     setLoading(false)
   }

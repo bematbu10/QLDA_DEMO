@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { getAllProjects } from "@/services/ProjectService";
 import { Project, ProjectTask } from "@/types/project";
+import projectService from "@/services/ProjectService";
 
 type ProjectTaskWithProject = ProjectTask & {
   projectId: string;
@@ -14,7 +14,7 @@ export const useProjects = () => {
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getAllProjects();
+      const data = await projectService.getAll();
       setProjects(data);
     } finally {
       setLoading(false);

@@ -1,12 +1,12 @@
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Building,
   FolderKanban,
   FileText,
   BarChart3,
   HardHat,
-  DollarSign
-} from "lucide-react"
+  DollarSign,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -18,7 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const navigationItems = [
   { title: "Bảng Điều Khiển ", url: "/dashboard", icon: BarChart3 },
@@ -26,23 +26,21 @@ const navigationItems = [
   { title: "Công Việc", url: "/tasks", icon: FolderKanban },
   { title: "Giải Ngân", url: "/disbursement", icon: DollarSign },
   { title: "Tài Liệu", url: "/documents", icon: FileText },
-  { title: "Tạo Bản Mẫu", url: "/templates", icon: HardHat },
-
-
-]
+  { title: "Quản lý giai đoạn", url: "/phases", icon: HardHat },
+];
 
 export function AppSidebar() {
-  const { state } = useSidebar()
-  const location = useLocation()
-  const currentPath = location.pathname
-  const isCollapsed = state === "collapsed"
+  const { state } = useSidebar();
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const isCollapsed = state === "collapsed";
 
-  const isActive = (path: string) => currentPath === path
+  const isActive = (path: string) => currentPath === path;
 
   const getNavClassName = (path: string) =>
     isActive(path)
       ? "bg-blue-100 text-blue-600 font-medium  rounded-md border-r-2 border-r-blue-600 "
-      : "hover:bg-blue-50  border border-transparent rounded-md "
+      : "hover:bg-blue-50  border border-transparent rounded-md ";
 
   return (
     <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
@@ -55,7 +53,9 @@ export function AppSidebar() {
             </div>
             {!isCollapsed && (
               <div className="flex flex-col">
-                <span className="font-semibold text-sm text-foreground">BuildManager</span>
+                <span className="font-semibold text-sm text-foreground">
+                  BuildManager
+                </span>
                 <span className="text-xs text-muted-foreground">Pro v2.0</span>
               </div>
             )}
@@ -70,7 +70,10 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavClassName(item.url)}>
+                    <NavLink
+                      to={item.url}
+                      className={getNavClassName(item.url)}
+                    >
                       <item.icon className="w-4 h-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -80,9 +83,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }

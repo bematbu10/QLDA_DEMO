@@ -28,12 +28,9 @@ import { Project } from "@/types/project"
 import { ProjectDetail } from "@/views/projects/ProjectDetail"
 import { ProjectForm } from "@/views/projects/ProjectForm"
 import { useProjects } from "@/hooks/useProjects"
-import {
-  addProject,
-  updateProject,
-  deleteProject
-} from "@/services/ProjectService"
 import { useState, useMemo } from "react"
+import projectService from "@/services/ProjectService"
+import { toast } from "sonner"
 
 export default function Dashboard() {
   const { projects, loading, refetch } = useProjects()
@@ -132,66 +129,73 @@ export default function Dashboard() {
   }
 
   const handleSaveProject = async (project: Project) => {
-    try {
-      const dataToSave = {
-        name: project.name,
-        description: project.description,
-        status: project.status,
-        progress: project.progress,
-        startDate: project.startDate,
-        endDate: project.endDate,
-        teamSize: project.teamSize,
-        budget: project.budget,
-        manager: project.manager,
-        category: project.category || "",
-        location: project.location || "",
-        phases: project.phases || [],
-        tasks: project.tasks || [],
-        createdAt: project.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        investmentLevel: project.investmentLevel || "",
-        investmentApproval: project.investmentApproval || "",
-        projectGroup: project.projectGroup || "",
-        investor: project.investor || "",
-        investmentType: project.investmentType || "",
-        managementType: project.managementType || "",
-        projectScale: project.projectScale || "",
-        designStepCount: project.designStepCount || 1,
-        designCapacity: project.designCapacity || "",
-        approvalDate: project.approvalDate || "",
-        legalDocuments: project.legalDocuments || [],
-        constructionLevel: project.constructionLevel || "",
-        constructionType: project.constructionType || "",
-        constructionLocation: project.constructionLocation || "",
-        designStandards: project.designStandards || "",
-        goals: project.goals || "",
-        method: project.syntheticMethod || "",
-        notes: project.notes || "",
-        numberTBMT: project.numberTBMT || "",
-        timeExceution: project.timeExceution || "",
-        contractorCompanyName: project.contractorCompanyName || [],
-        contrator: project.contrator || "",
-        contractorPrice: project.contractorPrice || 0,
-        relatedDocuments: project.relatedDocuments || [],
-        roleExecutor: project.roleExecutor || "",
-        capitalProject: project.capitalProject || "",
-        field: project.field || "",
-        documentFolder: project.documentFolder || []
-      }
-
-      if (dialogMode === "create" || dialogMode === "copy") {
-        await addProject(dataToSave)
-      } else if (dialogMode === "edit" && project.id) {
-        await updateProject(project.id, dataToSave)
-      }
-
-      await refetch()
-      setDialogMode(null)
-      setSelectedProject(null)
-    } catch (error) {
-      console.error("Lỗi khi lưu dự án:", error)
+    const isCreating = dialogMode === "create" || dialogMode === "copy";
+    const dataToSave = {
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      progress: project.progress,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      teamSize: project.teamSize,
+      budget: project.budget,
+      manager: project.manager,
+      category: project.category || "",
+      location: project.location || "",
+      phases: project.phases || [],
+      tasks: project.tasks || [],
+      createdAt: project.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      investmentLevel: project.investmentLevel || "",
+      investmentApproval: project.investmentApproval || "",
+      projectGroup: project.projectGroup || "",
+      investor: project.investor || "",
+      investmentType: project.investmentType || "",
+      managementType: project.managementType || "",
+      projectScale: project.projectScale || "",
+      designStepCount: project.designStepCount || 1,
+      designCapacity: project.designCapacity || "",
+      approvalDate: project.approvalDate || "",
+      legalDocuments: project.legalDocuments || [],
+      constructionLevel: project.constructionLevel || "",
+      constructionType: project.constructionType || "",
+      constructionLocation: project.constructionLocation || "",
+      designStandards: project.designStandards || "",
+      goals: project.goals || "",
+      method: project.syntheticMethod || "",
+      notes: project.notes || "",
+      numberTBMT: project.numberTBMT || "",
+      timeExceution: project.timeExecution || "",
+      contractorCompanyName: project.contractorCompanyName || [],
+      contrator: project.contractor || "",
+      contractorPrice: project.contractorPrice || 0,
+      relatedDocuments: project.relatedDocuments || [],
+      roleExecutor: project.roleExecutor || "",
+      capitalProject: project.capitalProject || "",
+      field: project.field || "",
+      documentFolder: project.documentFolder || []
     }
+
+    const savePromise = isCreating
+      ? projectService.create(dataToSave)
+      : projectService.update(project.id, dataToSave);
+
+    toast.promise(savePromise, {
+      loading: isCreating ? 'Đang tạo dự án...' : 'Đang cập nhật...',
+      success: (result) => {
+        // Sau khi thành công, thực hiện các hành động khác
+        refetch();
+        setDialogMode(null);
+        setSelectedProject(null);
+        return isCreating ? 'Tạo dự án thành công!' : 'Cập nhật dự án thành công!';
+      },
+      error: (err) => {
+        // Trả về thông điệp lỗi để hiển thị
+        return isCreating ? 'Tạo dự án thất bại.' : 'Cập nhật dự án thất bại.';
+      },
+    });
   }
+
 
   const handleCloseDialog = () => {
     setDialogMode(null)
@@ -224,10 +228,11 @@ export default function Dashboard() {
             <Plus className="w-4 h-4 mr-2" />
             Dự Án Mới
           </Button>
+          
         </div>
       </div>
       <DashboardStats stats={stats} />
-
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>

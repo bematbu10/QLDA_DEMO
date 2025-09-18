@@ -16,9 +16,11 @@ import { Project } from "@/types/project"
 import { ProjectDetail } from "@/views/projects/ProjectDetail"
 import { ProjectForm } from "@/views/projects/ProjectForm"
 import { useProjects } from "@/hooks/project/useProjects"
-import { addProject, updateProject } from "@/services/ProjectService"
+// import { addProject, updateProject } from "@/services/ProjectService"
 import { useState, useMemo } from "react"
 import { saveAs } from "file-saver"
+import projectService from "@/services/ProjectService"
+import { toast } from "sonner"
 
 export default function Dashboard() {
   const { projects, isLoading, refetch } = useProjects()
@@ -32,13 +34,13 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const totalProjects = projects.length
-    const activeProjects = projects.filter(p => p.status === "active").length
-    const completedProjects = projects.filter(p => p.status === "completed").length
+    const activeProjects = projects.filter(p => p.status === "ACTIVE").length
+    const completedProjects = projects.filter(p => p.status === "COMPLETED").length
 
     const now = new Date()
     const delayedProjects = projects.filter(p => {
       if (!p.endDate) return false
-      return new Date(p.endDate) < now && p.status !== "completed"
+      return new Date(p.endDate) < now && p.status !== "COMPLETED"
     }).length
 
     const teamMembers = projects.reduce((sum, p) => sum + (Number(p.teamSize) || 0), 0)
@@ -55,29 +57,35 @@ export default function Dashboard() {
   const handleCopyProject = (project: Project) => { setSelectedProject(project); setDialogMode('copy') }
 
   const handleSaveProject = async (project: Project) => {
-    try {
-      const dataToSave = {
-        ...project,
-        category: project.category || "",
-        location: project.location || "",
-        phases: project.phases || [],
-        tasks: project.tasks || [],
-        createdAt: project.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-
-      if (dialogMode === "create" || dialogMode === "copy") {
-        await addProject(dataToSave)
-      } else if (dialogMode === "edit" && project.id) {
-        await updateProject(project.id, dataToSave)
-      }
-
-      await refetch()
-      setDialogMode(null)
-      setSelectedProject(null)
-    } catch (error) {
-      console.error("Lỗi khi lưu dự án:", error)
+    const isCreating = dialogMode === "create" || dialogMode === "copy";
+    const dataToSave = {
+      ...project,
+      category: project.category || "",
+      location: project.location || "",
+      phases: project.phases || [],
+      tasks: project.tasks || [],
+      createdAt: project.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
+    const savePromise = isCreating
+      ? projectService.create(dataToSave)
+      : projectService.update(project.id, dataToSave);
+
+    toast.promise(savePromise, {
+      loading: isCreating ? 'Đang tạo dự án...' : 'Đang cập nhật...',
+      success: (result) => {
+        // Sau khi thành công, thực hiện các hành động khác
+        refetch();
+        setDialogMode(null);
+        setSelectedProject(null);
+        return isCreating ? 'Tạo dự án thành công!' : 'Cập nhật dự án thành công!';
+      },
+      error: (err) => {
+        // Trả về thông điệp lỗi để hiển thị
+        return isCreating ? 'Tạo dự án thất bại.' : 'Cập nhật dự án thất bại.';
+      },
+    });
+
   }
 
   const handleCloseDialog = () => { setDialogMode(null); setSelectedProject(null) }
@@ -92,7 +100,7 @@ export default function Dashboard() {
             {dialogMode === "edit"}
             {dialogMode === "copy"}
           </h2>
-          
+
         </div>
         <ProjectForm
           project={selectedProject || undefined}

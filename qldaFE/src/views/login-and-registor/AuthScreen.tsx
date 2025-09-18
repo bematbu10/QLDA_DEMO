@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Facebook, Mail, Lock, User } from "lucide-react";
-import { useAuth } from "@/services/auth/AuthContext";
 import { mapFirebaseErr } from "@/utils/firebaseErrors";
-import toast from 'react-hot-toast';
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -26,7 +26,7 @@ export default function AuthScreen() {
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-800">
                   {mode === "signin" ? "Đăng nhập" : "Đăng ký"}
                 </h2>
-                <div className="text-sm text-slate-500">
+                {/* <div className="text-sm text-slate-500">
                   {mode === "signin" ? (
                     <span>
                       Bạn mới ở đây?{" "}
@@ -48,7 +48,7 @@ export default function AuthScreen() {
                       </button>
                     </span>
                   )}
-                </div>
+                </div> */}
               </div>
 
               <AnimatePresence mode="wait" initial={false}>
@@ -56,8 +56,8 @@ export default function AuthScreen() {
                 }
               </AnimatePresence>
 
-              <Divider text="Hoặc tiếp tục với" />
-              <SocialRow />
+              {/* <Divider text="Hoặc tiếp tục với" />
+              <SocialRow /> */}
             </div>
           </CardContent>
 
@@ -149,7 +149,7 @@ function SignIn() {
   const [forgotOpen, setForgotOpen] = useState<boolean>(false);
   const navigate = useNavigate();
   const rememberedEmail = typeof window !== 'undefined' ? localStorage.getItem('auth_email') || '' : '';
-  const { signIn, forgot } = useAuth();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   return (
@@ -161,25 +161,43 @@ function SignIn() {
         transition={{ duration: 0.25 }}
         className="space-y-4"
         onSubmit={async (e) => {
-
           e.preventDefault();
+          setError(null); 
+          
           const fd = new FormData(e.currentTarget);
-          const email = String(fd.get("email") || "");
+          const username = String(fd.get("username") || ""); 
           const password = String(fd.get("password") || "");
-          try {
-            await signIn(email, password, remember);
 
+          if (!username || !password) {
+            setError("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
+            return;
+          }
+
+          try {
+            // TẠO PAYLOAD KHỚP VỚI YÊU CẦU CỦA API
+            const payload = {
+              username,
+              password,
+              isRememberMe: remember,
+            };
+
+            // GỌI HÀM LOGIN TỪ AUTHCONTEXT
+            await login(payload);
+            toast.success("Đăng nhập thành công");
+            // Điều hướng đến dashboard sau khi thành công
             navigate("/dashboard", { replace: true });
+
           } catch (err: any) {
-            setError(mapFirebaseErr(err));
+            // Lỗi sẽ được bắt từ interceptor và hiển thị
+            setError(err.message || "Tên đăng nhập hoặc mật khẩu không chính xác.");
           }
         }}
       >
         <div className="space-y-2">
-          <Label htmlFor="si-email">Email</Label>
+          <Label htmlFor="si-email">Tên đăng nhập</Label>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-slate-400" />
-            <Input id="si-email" name="email" type="email" defaultValue={rememberedEmail} placeholder="you@example.com" required />
+            <Input id="si-username" name="username" type="text" placeholder="nguyenvana" required />
           </div>
         </div>
         <div className="space-y-2">
@@ -190,20 +208,22 @@ function SignIn() {
           </div>
         </div>
 
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm text-slate-600">
             <Checkbox checked={remember} onCheckedChange={(v) => setRemember(Boolean(v))} />
             Ghi nhớ đăng nhập
           </label>
-          <button type="button" onClick={() => setForgotOpen(true)} className="text-sm font-medium text-blue-600 hover:underline">
+          {/* <button type="button" onClick={() => setForgotOpen(true)} className="text-sm font-medium text-blue-600 hover:underline">
             Quên mật khẩu?
-          </button>
+          </button> */}
         </div>
 
         <Button className="w-full rounded-full font-medium" type="submit">Đăng nhập</Button>
       </motion.form>
 
-      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+      {/* <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Đặt lại mật khẩu</DialogTitle>
@@ -232,7 +252,7 @@ function SignIn() {
             </DialogFooter>
           </form>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 }
@@ -255,7 +275,7 @@ function SignUp({ onSuccess }: { onSuccess: () => void }) {
         const email = String(fd.get("email") || "");
         const password = String(fd.get("password") || "");
         try {
-          await signUp(email, password);
+          await signUp();
           onSuccess();
         } catch (err: any) {
           toast.error(mapFirebaseErr(err), { duration: 5000 });

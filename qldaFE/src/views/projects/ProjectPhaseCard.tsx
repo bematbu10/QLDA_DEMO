@@ -24,22 +24,22 @@ interface ProjectPhaseCardProps {
 }
 
 const phaseStatusConfig = {
-  not_started: { 
+  NOT_STARTED: { 
     label: "Chưa Bắt Đầu", 
     className: "bg-gray-500 text-white",
     icon: Clock 
   },
-  in_progress: { 
+  IN_PROGRESS: { 
     label: "Đang Thực Hiện", 
     className: "bg-blue-500 text-white",
     icon: Play 
   },
-  completed: { 
+  COMPLETED: { 
     label: "Hoàn Thành", 
     className: "bg-green-500 text-white",
     icon: CheckCircle 
   },
-  blocked: { 
+  BLOCKED: { 
     label: "Bị Chặn", 
     className: "bg-red-500 text-white",
     icon: AlertTriangle 
@@ -47,22 +47,22 @@ const phaseStatusConfig = {
 }
 
 const taskStatusConfig = {
-  not_started: { 
+  NOT_STARTED: { 
     label: "Chưa Bắt Đầu", 
     className: "bg-gray-100 text-gray-700",
     icon: Clock 
   },
-  in_progress: { 
+  IN_PROGRESS: { 
     label: "Đang Thực Hiện", 
     className: "bg-blue-100 text-blue-700",
     icon: Play 
   },
-  completed: { 
+  COMPLETED: { 
     label: "Hoàn Thành", 
     className: "bg-green-100 text-green-700",
     icon: CheckCircle 
   },
-  blocked: { 
+  BLOCKED: { 
     label: "Bị Chặn", 
     className: "bg-red-100 text-red-700",
     icon: AlertTriangle 
@@ -74,8 +74,8 @@ export function ProjectPhaseCard({ phase, onStartPhase, onCompletePhase }: Proje
   const status = phaseStatusConfig[phase.status]
   const StatusIcon = status.icon
 
-  const completedTasks = phase.tasks.filter(task => task.status === 'completed').length
-  const totalTasks = phase.tasks.length
+  const completedTasks = phase.tasks?.filter(task => task.status === 'COMPLETED').length ?? 0
+  const totalTasks = phase.tasks?.length ?? 0
   const phaseProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
 
   const formatDate = (dateString?: string) => {
@@ -154,13 +154,13 @@ export function ProjectPhaseCard({ phase, onStartPhase, onCompletePhase }: Proje
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Công việc ({completedTasks}/{totalTasks})</h4>
                 <div className="flex gap-2">
-                  {phase.status === 'not_started' && onStartPhase && (
+                  {phase.status === 'NOT_STARTED' && onStartPhase && (
                     <Button size="sm" onClick={() => onStartPhase(phase.id)}>
                       <Play className="w-3 h-3 mr-1" />
                       Bắt Đầu
                     </Button>
                   )}
-                  {phase.status === 'in_progress' && onCompletePhase && (
+                  {phase.status === 'IN_PROGRESS' && onCompletePhase && (
                     <Button size="sm" variant="outline" onClick={() => onCompletePhase(phase.id)}>
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Hoàn Thành
@@ -170,7 +170,7 @@ export function ProjectPhaseCard({ phase, onStartPhase, onCompletePhase }: Proje
               </div>
               
               <div className="space-y-2">
-                {phase.tasks.map((task) => {
+                {phase.tasks?.map((task) => {
                   const taskStatus = taskStatusConfig[task.status]
                   const TaskIcon = taskStatus.icon
                   
@@ -203,7 +203,7 @@ export function ProjectPhaseCard({ phase, onStartPhase, onCompletePhase }: Proje
                   )
                 })}
                 
-                {phase.tasks.length === 0 && (
+                {phase.tasks?.length === 0 && (
                   <div className="text-center py-4 text-muted-foreground">
                     <FileText className="w-8 h-8 mx-auto mb-2" />
                     <p className="text-sm">Chưa có công việc nào</p>

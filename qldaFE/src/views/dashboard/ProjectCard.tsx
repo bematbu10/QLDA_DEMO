@@ -10,27 +10,27 @@ interface ProjectCardProps {
 }
 
 const statusConfig = {
-  planning: {
+  PLANNING: {
     label: "Lập Kế Hoạch",
     className: "bg-status-planning text-white",
     icon: CalendarDays
   },
-  active: {
+  ACTIVE: {
     label: "Đang Hoạt Động",
     className: "bg-status-active text-white",
     icon: CheckCircle
   },
-  on_hold: {
+  ON_HOLD: {
     label: "Tạm Dừng",
     className: "bg-status-delayed text-white",
     icon: AlertTriangle
   },
-  completed: {
+  COMPLETED: {
     label: "Hoàn Thành",
     className: "bg-status-completed text-white",
     icon: CheckCircle
   },
-  cancelled: {
+  CANCELED: {
     label: "Đã Hủy",
     className: "bg-status-blocked text-white",
     icon: AlertTriangle
@@ -38,6 +38,7 @@ const statusConfig = {
 }
 
 export function ProjectCard({ project, onClick }: ProjectCardProps) {
+  console.log("Rendering ProjectCard for project:", project.status)
   const status = statusConfig[project.status]
   const StatusIcon = status.icon
 

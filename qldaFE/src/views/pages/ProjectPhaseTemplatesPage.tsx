@@ -513,7 +513,7 @@
 //   )
 // }
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -529,88 +529,91 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  type ProjectPhase,
-  type ProjectTask,
-  type ProjectPhaseDocument,
-  toFileExt,
-} from "@/types/project";
+import { type ProjectPhaseCategory } from "@/types/project";
+import projectPhaseCategoryService from "@/services/ProjectPhaseCategoryService";
 
-const STORAGE_KEY = "phases:v1";
 const uid = (p = "") =>
   globalThis.crypto?.randomUUID?.() ??
   `${p}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-const emptyPhase = (order: number): ProjectPhase => ({
-  id: uid("phase-"),
-  name: "Giai đoạn mới",
-  description: "",
-  order,
-  status: "not_started",
-  tasks: [] as ProjectTask[],
-  documentProjectPhase: [] as ProjectPhaseDocument[],
-});
-
 export default function ProjectPhasesPage() {
-  const [phases, setPhases] = useState<ProjectPhase[]>([]);
-  const [isDlgOpen, setDlgOpen] = useState(false);
-  const [editing, setEditing] = useState<ProjectPhase | null>(null);
-  const [form, setForm] = useState<Partial<ProjectPhase>>(emptyPhase(1));
+  const [phases, setPhases] = useState<ProjectPhaseCategory[]>([]);
+  const [editing, setEditing] = useState<ProjectPhaseCategory | null>(null);
+  const [form, setForm] = useState<Partial<ProjectPhaseCategory>>({});
 
-  // Load/Save LocalStorage
+  // Load phases
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setPhases(JSON.parse(raw));
-    } catch (e) {
-      console.error(e);
-    }
+    projectPhaseCategoryService
+      .getAll()
+      .then(setPhases)
+      .catch(() => toast.error("Không tải được danh sách giai đoạn"));
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(phases));
-  }, [phases]);
 
   const openAdd = () => {
     setEditing(null);
-    setForm(emptyPhase(phases.length + 1));
-    setDlgOpen(true);
+    setForm({
+      id: uid("phase-"),
+      name: "",
+      description: "",
+      order: phases.length + 1,
+      status: "NOT_STARTED",
+      tasks: [],
+      documentProjectPhase: [],
+    });
   };
 
-  const openEdit = (p: ProjectPhase) => {
+  const openEdit = (p: ProjectPhaseCategory) => {
     setEditing(p);
     setForm(p);
-    setDlgOpen(true);
   };
 
-  const savePhase = () => {
+  const savePhase = async () => {
     const name = (form.name ?? "").trim();
     if (!name) {
       toast.error("Tên giai đoạn không được để trống");
       return;
     }
-    const next: ProjectPhase = {
-      id: editing?.id ?? uid("phase-"),
+
+    const payload: ProjectPhaseCategory = {
+      id: form.id ?? uid("phase-"),
       name,
       description: form.description ?? "",
       order: Number(form.order ?? phases.length + 1),
-      status: form.status ?? "not_started",
+      status: form.status ?? "NOT_STARTED",
       startDate: form.startDate,
       endDate: form.endDate,
       legalBasis: form.legalBasis,
       tasks: form.tasks ?? [],
       documentProjectPhase: form.documentProjectPhase ?? [],
     };
-    if (editing) {
-      setPhases((prev) => prev.map((p) => (p.id === editing.id ? next : p)));
-    } else {
-      setPhases((prev) => [...prev, next]);
+
+    try {
+      if (editing) {
+        const updated = await projectPhaseCategoryService.update(editing.id, payload);
+        setPhases(prev => prev.map(p => (p.id === editing.id ? updated : p)));
+        toast.success("Cập nhật giai đoạn thành công");
+      } else {
+        const created = await projectPhaseCategoryService.create(payload);
+        setPhases(prev => [...prev, created]);
+        toast.success("Tạo mới giai đoạn thành công");
+      }
+      setForm({});
+      setEditing(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi khi lưu giai đoạn");
     }
-    setDlgOpen(false);
   };
 
-  const removePhase = (id: string) => {
-    setPhases((prev) => prev.filter((p) => p.id !== id));
+  const removePhase = async (id: string) => {
+    try {
+      await projectPhaseCategoryService.delete(id);
+      setPhases(prev => prev.filter(p => p.id !== id));
+      toast.success("Xóa giai đoạn thành công");
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi khi xóa giai đoạn");
+    }
   };
 
   return (
@@ -622,6 +625,58 @@ export default function ProjectPhasesPage() {
           Thêm giai đoạn
         </Button>
       </div>
+
+      {/* Form inline thay cho Dialog */}
+      {form && form.id && (
+        <Card className="p-4 space-y-3 border-2 border-blue-400">
+          <h2 className="font-semibold">
+            {editing ? "Sửa giai đoạn" : "Thêm giai đoạn"}
+          </h2>
+          <div>
+            <Label>Tên *</Label>
+            <Input
+              value={form.name ?? ""}
+              onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label>Mô tả</Label>
+            <Textarea
+              value={form.description ?? ""}
+              onChange={(e) =>
+                setForm((v) => ({ ...v, description: e.target.value }))
+              }
+            />
+          </div>
+          <div>
+            <Label>Thứ tự</Label>
+            <Input
+              type="number"
+              value={form.order ?? 1}
+              onChange={(e) =>
+                setForm((v) => ({ ...v, order: Number(e.target.value) }))
+              }
+            />
+          </div>
+          <div>
+            <Label>Cơ sở pháp lý</Label>
+            <Input
+              value={form.legalBasis ?? ""}
+              onChange={(e) =>
+                setForm((v) => ({ ...v, legalBasis: e.target.value }))
+              }
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setForm({})}>
+              Hủy
+            </Button>
+            <Button onClick={savePhase}>
+              <Save className="w-4 h-4 mr-2" /> Lưu
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {phases.length === 0 ? (
         <div className="text-muted-foreground text-center py-10">
@@ -649,18 +704,10 @@ export default function ProjectPhasesPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => openEdit(p)}
-                  >
+                  <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => removePhase(p.id)}
-                  >
+                  <Button size="icon" variant="ghost" onClick={() => removePhase(p.id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -669,65 +716,7 @@ export default function ProjectPhasesPage() {
           ))}
         </div>
       )}
-
-      {/* Dialog */}
-      <Dialog open={isDlgOpen} onOpenChange={setDlgOpen}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editing ? "Sửa giai đoạn" : "Thêm giai đoạn"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Tên *</Label>
-              <Input
-                value={form.name ?? ""}
-                onChange={(e) =>
-                  setForm((v) => ({ ...v, name: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label>Mô tả</Label>
-              <Textarea
-                value={form.description ?? ""}
-                onChange={(e) =>
-                  setForm((v) => ({ ...v, description: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label>Thứ tự</Label>
-              <Input
-                type="number"
-                value={form.order ?? 1}
-                onChange={(e) =>
-                  setForm((v) => ({ ...v, order: Number(e.target.value) }))
-                }
-              />
-            </div>
-            <div>
-              <Label>Cơ sở pháp lý</Label>
-              <Input
-                value={form.legalBasis ?? ""}
-                onChange={(e) =>
-                  setForm((v) => ({ ...v, legalBasis: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDlgOpen(false)}>
-              Hủy
-            </Button>
-            <Button onClick={savePhase}>
-              <Save className="w-4 h-4 mr-2" />
-              Lưu
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
+

@@ -41,11 +41,11 @@ interface ProjectDetailProps {
 }
 
 const statusConfig = {
-  planning: { label: "Lập Kế Hoạch", className: "bg-status-planning text-white", icon: Clock },
-  active: { label: "Đang Hoạt Động", className: "bg-status-active text-white", icon: CheckCircle },
-  on_hold: { label: "Tạm Dừng", className: "bg-status-delayed text-white", icon: AlertTriangle },
-  completed: { label: "Hoàn Thành", className: "bg-status-completed text-white", icon: CheckCircle },
-  cancelled: { label: "Đã Hủy", className: "bg-status-blocked text-white", icon: AlertTriangle },
+  PLANNING: { label: "Lập Kế Hoạch", className: "bg-status-planning text-white", icon: Clock },
+  ACTIVE: { label: "Đang Hoạt Động", className: "bg-status-active text-white", icon: CheckCircle },
+  ON_HOLD: { label: "Tạm Dừng", className: "bg-status-delayed text-white", icon: AlertTriangle },
+  COMPLETED: { label: "Hoàn Thành", className: "bg-status-completed text-white", icon: CheckCircle },
+  CANCELLED: { label: "Đã Hủy", className: "bg-status-blocked text-white", icon: AlertTriangle },
 };
 
 function makePlanFromRequests(projectId: string, periods: string[]): DisbursementPlanOnlyProject {
@@ -146,7 +146,7 @@ export function ProjectDetail({ project, onEdit, onCopy, onClose }: ProjectDetai
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  const completedPhases = project.phases?.filter((phase) => phase.status === "completed").length || 0;
+  const completedPhases = project.phases?.filter((phase) => phase.status === "COMPLETED").length || 0;
   const totalPhases = project.phases?.length || 0;
   const phaseProgress = totalPhases > 0 ? (completedPhases / totalPhases) * 100 : 0;
 
@@ -370,13 +370,13 @@ export function ProjectDetail({ project, onEdit, onCopy, onClose }: ProjectDetai
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Đang Thực Hiện</span>
                     <span className="font-medium text-blue-600">
-                      {project.phases?.filter((p) => p.status === "in_progress").length || 0}
+                      {project.phases?.filter((p) => p.status === "IN_PROGRESS").length || 0}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Chưa Bắt Đầu</span>
                     <span className="font-medium text-gray-600">
-                      {project.phases?.filter((p) => p.status === "not_started").length || 0}
+                      {project.phases?.filter((p) => p.status === "NOT_STARTED").length || 0}
                     </span>
                   </div>
                 </CardContent>

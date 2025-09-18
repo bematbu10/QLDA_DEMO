@@ -52,7 +52,13 @@ spring:
     cache: false
 
 server:
-  port: 8082
+  port: 8083
+
+security:
+  jwt:
+    token-validity-in-seconds: 900
+    refresh-token-validity-in-seconds: 2592000
+    refresh-token-validity-in-seconds-for-remember-me: 25920000
 
 # ===================================================================
 # JHipster specific properties

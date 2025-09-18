@@ -1,93 +1,51 @@
-import {
-  collection,
-  addDoc,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  doc,
-  arrayUnion,
-  arrayRemove,
-  getDoc,
-} from "firebase/firestore"
-import { db } from "./FirebaseConfig.ts";
-import { milestone, Project, ProjectTask, ProjectTemplate } from "@/types/project"  // Đảm bảo đã định nghĩa các kiểu này
+// src/services/projectService.ts
 
-// Collections
-const projectCollection = collection(db, "projects")
-const projectTemplateCollection = collection(db, "projects_template4")
+import apiService from '@/apis/apiService';
+import { Project, ProjectPayload } from '@/types/project';
 
+const PROJECT_ENDPOINT = '/projects/getAll';
+const PROJECT_ENDPOINT_UPDATE = '/projects/update';
+const PROJECT_ENDPOINT_CREATE = '/projects/add';
 
-// Lấy toàn bộ template dự án
-export const getAllProjectsTemplate = async (): Promise<ProjectTemplate[]> => {
-  const data = await getDocs(projectTemplateCollection)
-  return data.docs.map((doc) => ({
-    ...doc.data(),
-    id: doc.id
-  } as ProjectTemplate))
-}
+const projectService = {
+  /**
+   * Lấy danh sách tất cả các dự án.
+   */
+  getAll: (): Promise<Project[]> => {
+    return apiService.get<Project[]>(PROJECT_ENDPOINT);
+  },
 
-// Thêm sửa xóa milestones trong dự án
-// Thêm milestone mới
-export const addMilestone = async (projectId: string, newMilestone: milestone): Promise<void> => {
-  const projectDoc = doc(db, "projects", projectId)
-  await updateDoc(projectDoc, {
-    milestones: arrayUnion(newMilestone)
-  })
-}
+  /**
+   * Lấy chi tiết một dự án bằng ID.
+   */
+  getById: (id: string): Promise<Project> => {
+    return apiService.get<Project>(`${PROJECT_ENDPOINT}/${id}`);
+  },
 
-// Xoá milestone theo object
-export const deleteMilestone = async (projectId: string, milestoneToDelete: milestone): Promise<void> => {
-  const projectDoc = doc(db, "projects", projectId)
-  await updateDoc(projectDoc, {
-    milestones: arrayRemove(milestoneToDelete)
-  })
-}
+  /**
+   * Tạo một dự án mới.
+   * @param payload Dữ liệu của dự án mới
+   */
+  create: (payload: ProjectPayload): Promise<Project> => {
+    return apiService.post<Project>(PROJECT_ENDPOINT_CREATE, payload);
+  },
 
+  /**
+   * Cập nhật một dự án đã có.
+   * @param id ID của dự án cần cập nhật
+   * @param payload Dữ liệu cần cập nhật
+   */
+  update: (id: string, payload: Partial<ProjectPayload>): Promise<Project> => {
+    return apiService.put<Project>(`${PROJECT_ENDPOINT_UPDATE}/${id}`, payload);
+  },
 
-// Cập nhật milestone (cần load toàn bộ mảng, sửa, rồi ghi lại)
-export const updateMilestone = async (projectId: string, updatedMilestone: milestone): Promise<void> => {
-  const projectDoc = doc(db, "projects", projectId)
+  /**
+   * Xóa một dự án.
+   * @param id ID của dự án cần xóa
+   */
+  delete: (id: string): Promise<void> => {
+    return apiService.delete<void>(`${PROJECT_ENDPOINT}/${id}`);
+  },
+};
 
-  // Lấy dữ liệu dự án hiện tại
-  const projectSnap = await getDoc(projectDoc)
-  if (!projectSnap.exists()) return
-
-  const projectData = projectSnap.data()
-  const milestones = (projectData.milestones || []) as milestone[]
-
-  // Tìm và cập nhật milestone theo id
-  const newMilestones = milestones.map(m =>
-    m.id === updatedMilestone.id ? updatedMilestone : m
-  )
-
-  await updateDoc(projectDoc, { milestones: newMilestones })
-}
-
-// Lấy toàn bộ dự án
-export const getAllProjects = async (): Promise<Project[]> => {
-  const data = await getDocs(projectCollection)
-  return data.docs.map((doc) => ({
-    ...doc.data(),
-    id: doc.id
-  } as Project))
-}
-
-// Thêm dự án mới
-export const addProject = async (newProject: Omit<Project, 'id'>): Promise<void> => {
-  await addDoc(projectCollection, newProject)
-}
-
-// Cập nhật dự án
-export const updateProject = async (
-  id: string,
-  updatedProject: Partial<Project>
-): Promise<void> => {
-  const projectDoc = doc(db, "projects", id)
-  await updateDoc(projectDoc, updatedProject)
-}
-
-// Xoá dự án
-export const deleteProject = async (id: string): Promise<void> => {
-  const projectDoc = doc(db, "projects", id)
-  await deleteDoc(projectDoc)
-}
+export default projectService;
